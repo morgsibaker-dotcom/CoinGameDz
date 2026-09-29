@@ -7,28 +7,29 @@ import { initializeTelegramWebApp } from './services/telegramService'
 import { useTelegramStore } from './store/telegramStore'
 import { mapTelegramLanguageToApp } from './utils/languageMapper'
 
-// Initialize Telegram WebApp first
 initializeTelegramWebApp()
 
-// Initialize i18n
 i18n.init()
 
 function AppWrapper() {
   useEffect(() => {
-    // Initialize Telegram store and set language
-    const { initializeTelegram, telegramLanguageCode } = useTelegramStore.getState()
-    initializeTelegram()
+    const initialize = async () => {
+      const store = useTelegramStore.getState()
 
-    // Map Telegram language to app language and set it
-    const appLanguage = mapTelegramLanguageToApp(telegramLanguageCode, 'en')
-    i18n.changeLanguage(appLanguage)
+      await store.initializeTelegram()
 
-    // Set RTL for Arabic
-    if (appLanguage === 'ar') {
-      document.documentElement.dir = 'rtl'
-    } else {
-      document.documentElement.dir = 'ltr'
+      const languageCode =
+        useTelegramStore.getState().telegramLanguageCode
+
+      const appLanguage = mapTelegramLanguageToApp(languageCode, 'en')
+
+      i18n.changeLanguage(appLanguage)
+
+      document.documentElement.dir =
+        appLanguage === 'ar' ? 'rtl' : 'ltr'
     }
+
+    initialize()
   }, [])
 
   return <App />
