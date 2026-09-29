@@ -3,7 +3,6 @@ import BottomNavigation from '../components/common/BottomNavigation'
 import AdCard from '../components/earn/AdCard'
 import TaskCard from '../components/earn/TaskCard'
 import Card from '../components/common/Card'
-import { useTranslation } from 'react-i18next'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/common/Tabs'
 import { useState } from 'react'
 import { Task } from '../types'
@@ -60,7 +59,6 @@ const mockTasks: Task[] = [
 ]
 
 export default function Earn() {
-  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState('ads')
 
   return (
