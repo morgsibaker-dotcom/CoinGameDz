@@ -3,6 +3,14 @@
     "title": "CoinGameDz",
     "description": "Professional Telegram Mini App Rewards Platform"
   },
+  "nav": {
+    "home": "Home",
+    "earn": "Earn",
+    "rewards": "Rewards",
+    "referrals": "Referrals",
+    "wallet": "Wallet",
+    "profile": "Profile"
+  },
   "common": {
     "loading": "Loading...",
     "error": "An error occurred",
