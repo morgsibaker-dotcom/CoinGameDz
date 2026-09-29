@@ -17,6 +17,8 @@ function AppWrapper() {
       const store = useTelegramStore.getState()
 
       await store.initializeTelegram()
+      const { loadUser } = useUserStore.getState()
+await loadUser()
 
       const languageCode =
         useTelegramStore.getState().telegramLanguageCode
