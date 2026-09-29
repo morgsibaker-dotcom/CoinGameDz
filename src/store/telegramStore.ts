@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { TelegramUser } from '../types/telegram'
-import { getTelegramUser, getTelegramLanguageCode, isInsideTelegram } from '../services/telegramService'
+import {
+  getTelegramUser,
+  getTelegramLanguageCode,
+  isInsideTelegram,
+} from '../services/telegramService'
+import { registerTelegramUser } from '../services/telegramUserService'
 
 // Mock Telegram user for development/fallback
 const createMockTelegramUser = (): TelegramUser => ({
@@ -17,15 +22,17 @@ interface TelegramStore {
   telegramUser: TelegramUser | null
   isInsideTelegram: boolean
   telegramLanguageCode: string | null
-  initializeTelegram: () => void
+  isRegistering: boolean
+  initializeTelegram: () => Promise<void>
 }
 
 export const useTelegramStore = create<TelegramStore>((set) => ({
   telegramUser: null,
   isInsideTelegram: false,
   telegramLanguageCode: null,
+  isRegistering: false,
 
-  initializeTelegram: () => {
+  initializeTelegram: async () => {
     const inside = isInsideTelegram()
     const user = getTelegramUser() || createMockTelegramUser()
     const languageCode = getTelegramLanguageCode()
@@ -34,7 +41,26 @@ export const useTelegramStore = create<TelegramStore>((set) => ({
       isInsideTelegram: inside,
       telegramUser: user,
       telegramLanguageCode: languageCode,
+      isRegistering: true,
     })
+
+    try {
+      await registerTelegramUser(user)
+
+      console.log('[CoinGameDz] Telegram user registered in Supabase', {
+        telegramId: user.id,
+        username: user.username,
+      })
+    } catch (error) {
+      console.error(
+        '[CoinGameDz] Failed to register Telegram user in Supabase',
+        error
+      )
+    } finally {
+      set({
+        isRegistering: false,
+      })
+    }
 
     console.log('[CoinGameDz] Telegram store initialized', {
       inside,
