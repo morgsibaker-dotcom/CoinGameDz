@@ -6,7 +6,7 @@ import { Zap } from 'lucide-react'
 export default function Header() {
   const { user } = useUserStore()
   const { telegramUser } = useTelegramStore()
-  const { t, i18n } = useTranslation()
+  const { i18n } = useTranslation()
   const isRTL = i18n.language === 'ar'
 
   if (!user) return null
