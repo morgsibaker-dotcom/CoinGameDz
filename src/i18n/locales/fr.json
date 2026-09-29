@@ -1,0 +1,18 @@
+{
+  "app": {
+    "title": "CoinGameDz",
+    "description": "Plateforme de récompenses professionnelle pour les mini-applications Telegram"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur s'est produite",
+    "back": "Retour",
+    "close": "Fermer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "search": "Rechercher"
+  }
+}

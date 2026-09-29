@@ -1,0 +1,18 @@
+{
+  "app": {
+    "title": "CoinGameDz",
+    "description": "Professional Telegram Mini App Rewards Platform"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "back": "Back",
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search"
+  }
+}
