@@ -15,6 +15,7 @@ function App() {
   const { i18n } = useTranslation()
 
   useEffect(() => {
+    // Handle RTL/LTR based on language
     if (i18n.language === 'ar') {
       document.documentElement.dir = 'rtl'
       document.documentElement.lang = 'ar'

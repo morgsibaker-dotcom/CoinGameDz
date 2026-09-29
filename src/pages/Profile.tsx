@@ -3,18 +3,33 @@ import BottomNavigation from '../components/common/BottomNavigation'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import { useUserStore } from '../store/userStore'
-import { Calendar, Award, Users, LogOut } from 'lucide-react'
+import { useTelegramStore } from '../store/telegramStore'
+import { Calendar, Award, Users, LogOut, Copy } from 'lucide-react'
+import { useState } from 'react'
 
 export default function Profile() {
   const { user } = useUserStore()
+  const { telegramUser } = useTelegramStore()
+  const [copied, setCopied] = useState(false)
 
   if (!user) return null
+
+  // Use Telegram user ID if available
+  const displayUserId = telegramUser?.id || user.id
+  const displayName = telegramUser?.username || telegramUser?.first_name || user.username
+  const displayAvatar = telegramUser?.photo_url || user.avatar
 
   const joinDate = user.joinDate.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   })
+
+  const copyUserId = () => {
+    navigator.clipboard.writeText(displayUserId.toString())
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 pb-24">
@@ -25,13 +40,22 @@ export default function Profile() {
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <img
-                src={user.avatar}
-                alt={user.username}
-                className="w-16 h-16 rounded-full border-2 border-blue-500"
+                src={displayAvatar}
+                alt={displayName}
+                className="w-16 h-16 rounded-full border-2 border-blue-500 object-cover"
               />
               <div>
-                <h2 className="text-xl font-bold text-white">{user.username}</h2>
-                <p className="text-slate-400 text-sm">ID: {user.id}</p>
+                <h2 className="text-xl font-bold text-white">{displayName}</h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-slate-400 text-sm">ID: {displayUserId}</p>
+                  <button
+                    onClick={copyUserId}
+                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                    title="Copy ID"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
