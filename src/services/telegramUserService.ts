@@ -10,10 +10,9 @@ export async function registerTelegramUser(
       {
         telegram_id: telegramUser.id,
         username: telegramUser.username ?? null,
-        first_name: telegramUser.first_name ?? "",
+        first_name: telegramUser.first_name,
         last_name: telegramUser.last_name ?? null,
         language_code: telegramUser.language_code ?? "en",
-        photo_url: telegramUser.photo_url ?? null,
       },
       {
         onConflict: "telegram_id",
