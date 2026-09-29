@@ -6,6 +6,7 @@ import i18n from './i18n/config'
 import { initializeTelegramWebApp } from './services/telegramService'
 import { useTelegramStore } from './store/telegramStore'
 import { mapTelegramLanguageToApp } from './utils/languageMapper'
+import { useUserStore } from './store/userStore'
 
 initializeTelegramWebApp()
 
