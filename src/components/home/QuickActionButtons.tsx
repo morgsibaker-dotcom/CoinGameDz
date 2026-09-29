@@ -1,5 +1,3 @@
-import Button from '../common/Button'
-import { useTranslation } from 'react-i18next'
 import {
   Play,
   CheckSquare,
@@ -19,7 +17,6 @@ const actions = [
 ]
 
 export default function QuickActionButtons() {
-  const { t } = useTranslation()
 
   return (
     <div className="grid grid-cols-3 gap-3">
