@@ -53,7 +53,7 @@ export default function Profile() {
                     className="text-blue-400 hover:text-blue-300 transition-colors"
                     title="Copy ID"
                   >
-                    <Copy className="w-4 h-4" />
+                    {copied ? 'Copied!' : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
