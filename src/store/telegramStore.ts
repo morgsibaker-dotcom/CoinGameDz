@@ -6,7 +6,6 @@ import {
   getTelegramWebApp,
   isInsideTelegram,
 } from '../services/telegramService'
-import { registerTelegramUser } from '../services/telegramUserService'
 import { supabase } from '../lib/supabase'
 
 // Mock Telegram user for development/fallback
