@@ -9,13 +9,13 @@ const Rewards = lazy(() => import('./pages/Rewards'))
 const Referrals = lazy(() => import('./pages/Referrals'))
 const Wallet = lazy(() => import('./pages/Wallet'))
 const Profile = lazy(() => import('./pages/Profile'))
+const AdminLogin = lazy(() => import('./pages/AdminLogin'))
 const NotFoundPage = lazy(() => import('./pages/NotFound'))
 
 function App() {
   const { i18n } = useTranslation()
 
   useEffect(() => {
-    // Handle RTL/LTR based on language
     if (i18n.language === 'ar') {
       document.documentElement.dir = 'rtl'
       document.documentElement.lang = 'ar'
@@ -36,6 +36,9 @@ function App() {
             <Route path="/referrals" element={<Referrals />} />
             <Route path="/wallet" element={<Wallet />} />
             <Route path="/profile" element={<Profile />} />
+
+            <Route path="/admin/login" element={<AdminLogin />} />
+
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
