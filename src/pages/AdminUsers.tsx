@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ArrowLeft, UserCheck, UserX } from 'lucide-react'
-import { getAdminUsers, AdminUser } from '../services/adminUsersService'
+import {
+  Search,
+  ArrowLeft,
+  UserCheck,
+  UserX,
+} from 'lucide-react'
+import {
+  getAdminUsers,
+  AdminUser,
+} from '../services/adminUsersService'
 
 export default function AdminUsers() {
   const navigate = useNavigate()
@@ -42,6 +50,7 @@ export default function AdminUsers() {
       <header className="border-b border-slate-800 bg-slate-900 px-4 py-4">
         <div className="mx-auto flex max-w-6xl items-center gap-4">
           <button
+            type="button"
             onClick={() => navigate('/admin')}
             className="rounded-xl bg-slate-800 p-3 hover:bg-slate-700"
           >
@@ -77,6 +86,7 @@ export default function AdminUsers() {
           />
 
           <button
+            type="button"
             onClick={handleSearch}
             className="rounded-xl bg-blue-600 px-5 py-3 hover:bg-blue-500"
           >
@@ -115,4 +125,63 @@ export default function AdminUsers() {
 
               <tbody>
                 {users.map((user) => (
-                  <
+                  <tr
+                    key={user.id}
+                    className="border-b border-slate-800 last:border-0"
+                  >
+                    <td className="px-4 py-4">
+                      <div className="font-semibold">
+                        {user.first_name}{' '}
+                        {user.last_name ?? ''}
+                      </div>
+
+                      <div className="text-sm text-slate-400">
+                        @{user.username ?? 'no_username'}
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-4 text-slate-300">
+                      {user.telegram_id}
+                    </td>
+
+                    <td className="px-4 py-4 uppercase">
+                      {user.language ?? '—'}
+                    </td>
+
+                    <td className="px-4 py-4 font-semibold">
+                      {Number(
+                        user.points_balance ?? 0,
+                      ).toLocaleString()}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      {user.level}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      {user.referral_count}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      {user.is_active ? (
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 px-2 py-1 text-sm text-emerald-400">
+                          <UserCheck size={16} />
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-red-500/10 px-2 py-1 text-sm text-red-400">
+                          <UserX size={16} />
+                          Disabled
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
