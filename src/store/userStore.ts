@@ -20,40 +20,73 @@ export const useUserStore = create<UserStore>((set) => ({
     set({ isLoading: true })
 
     try {
-      const telegramUser = useTelegramStore.getState().telegramUser
+      const telegramUser =
+        useTelegramStore.getState().telegramUser
 
       if (!telegramUser) {
         return
       }
 
-      const dbUser = await getUserByTelegramId(telegramUser.id)
+      const dbUser =
+        await getUserByTelegramId(telegramUser.id)
 
       if (!dbUser) {
         return
       }
 
+      const points =
+        Number(dbUser.points_balance ?? 0)
+
       const user: User = {
         id: String(dbUser.id),
-        username: dbUser.username ?? '',
-        avatar: dbUser.avatar_url ?? '',
-        points: Number(dbUser.points_balance ?? 0),
-        level: Number(dbUser.level ?? 1),
-        usdEquivalent: Number(dbUser.usd_equivalent ?? 0),
-        joinDate: new Date(dbUser.created_at),
-        referralCode: dbUser.referral_code ?? '',
-        referralCount: 0,
-        referralEarnings: 0,
+
+        username:
+          dbUser.username ??
+          dbUser.first_name ??
+          '',
+
+        avatar:
+          dbUser.avatar_url ?? '',
+
+        points,
+
+        level:
+          Number(dbUser.level ?? 1),
+
+        usdEquivalent:
+          Number(
+            dbUser.usd_equivalent ??
+            points / 1000
+          ),
+
+        joinDate:
+          new Date(dbUser.created_at),
+
+        referralCode:
+          dbUser.referral_code ?? '',
+
+        referralCount:
+          Number(dbUser.referral_count ?? 0),
+
+        referralEarnings:
+          Math.floor(
+            Number(dbUser.referral_count ?? 0) / 10
+          ) * 100,
       }
 
       set({ user })
     } catch (error) {
-      console.error('[CoinGameDz] Failed to load user', error)
+      console.error(
+        '[CoinGameDz] Failed to load user',
+        error
+      )
     } finally {
       set({ isLoading: false })
     }
   },
 
-  setUser: (user) => set({ user }),
+  setUser: (user) =>
+    set({ user }),
 
   updatePoints: (points) =>
     set((state) => {
@@ -63,7 +96,8 @@ export const useUserStore = create<UserStore>((set) => ({
         user: {
           ...state.user,
           points,
-          usdEquivalent: points / 1000,
+          usdEquivalent:
+            points / 1000,
         },
       }
     }),
