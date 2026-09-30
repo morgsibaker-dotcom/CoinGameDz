@@ -154,10 +154,69 @@ Deno.serve(async (req) => {
 
     const telegramUser = JSON.parse(userJson)
 
+    if (!telegramUser.id || !telegramUser.first_name) {
+      throw new Error(
+        'Invalid Telegram user data',
+      )
+    }
+
+    const supabaseUrl =
+      Deno.env.get('SUPABASE_URL')
+
+    const serviceRoleKey =
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error(
+        'Supabase server credentials are not configured',
+      )
+    }
+
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/users?on_conflict=telegram_id`,
+      {
+        method: 'POST',
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+          'Content-Type': 'application/json',
+          Prefer: 'resolution=merge-duplicates,return=representation',
+        },
+        body: JSON.stringify({
+          telegram_id: telegramUser.id,
+          username: telegramUser.username ?? null,
+          first_name: telegramUser.first_name,
+          last_name: telegramUser.last_name ?? null,
+          language:
+            telegramUser.language_code ?? 'en',
+          avatar_url:
+            telegramUser.photo_url ?? null,
+        }),
+      },
+    )
+
+    if (!response.ok) {
+      const errorText = await response.text()
+
+      throw new Error(
+        `Failed to register user: ${errorText}`,
+      )
+    }
+
+    const users = await response.json()
+    const user = users?.[0]
+
+    if (!user) {
+      throw new Error(
+        'User registration returned no data',
+      )
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         user: telegramUser,
+        databaseUser: user,
       }),
       {
         status: 200,
