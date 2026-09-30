@@ -3,12 +3,19 @@ import BottomNavigation from '../components/common/BottomNavigation'
 import RewardCard from '../components/rewards/RewardCard'
 import Card from '../components/common/Card'
 import { Reward } from '../types'
-import { getActiveRewards } from '../services/rewardService'
+import {
+  getActiveRewards,
+  claimReward,
+} from '../services/rewardService'
 import { useEffect, useState } from 'react'
+import { useUserStore } from '../store/userStore'
 
 export default function Rewards() {
   const [rewards, setRewards] = useState<Reward[]>([])
   const [loading, setLoading] = useState(true)
+  const [claiming, setClaiming] = useState<string | null>(null)
+
+  const { user, updatePoints } = useUserStore()
 
   useEffect(() => {
     const loadRewards = async () => {
@@ -47,6 +54,42 @@ export default function Rewards() {
     loadRewards()
   }, [])
 
+  const handleClaimReward = async (reward: Reward) => {
+    if (!user || claiming) {
+      return
+    }
+
+    try {
+      setClaiming(reward.id)
+
+      const newBalance = await claimReward(
+        user.id,
+        reward.id
+      )
+
+      updatePoints(Number(newBalance))
+
+      setRewards((currentRewards) =>
+        currentRewards.map((item) =>
+          item.id === reward.id
+            ? {
+                ...item,
+                claimed: true,
+                claimDate: new Date(),
+              }
+            : item
+        )
+      )
+    } catch (error) {
+      console.error(
+        '[CoinGameDz] Failed to claim reward',
+        error
+      )
+    } finally {
+      setClaiming(null)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 pb-24">
       <Header />
@@ -81,6 +124,7 @@ export default function Rewards() {
             <RewardCard
               key={reward.id}
               reward={reward}
+              onClaim={() => handleClaimReward(reward)}
             />
           ))
         )}
