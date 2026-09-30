@@ -45,14 +45,17 @@ export const useTelegramStore = create<TelegramStore>((set) => ({
     })
 
     try {
-  if (inside) {
-    await registerTelegramUser(user)
+      if (inside) {
+        await registerTelegramUser(user)
 
-    console.log('[CoinGameDz] Telegram user registered in Supabase', {
-      telegramId: user.id,
-      username: user.username,
-    })
-    
+        console.log(
+          '[CoinGameDz] Telegram user registered in Supabase',
+          {
+            telegramId: user.id,
+            username: user.username,
+          }
+        )
+      }
     } catch (error) {
       console.error(
         '[CoinGameDz] Failed to register Telegram user in Supabase',
