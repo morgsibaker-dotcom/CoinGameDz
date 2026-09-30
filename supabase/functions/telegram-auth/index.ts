@@ -1,4 +1,3 @@
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
@@ -43,6 +42,25 @@ async function validateTelegramInitData(
 
   if (!receivedHash) {
     throw new Error('Missing Telegram hash')
+  }
+
+  const authDate = params.get('auth_date')
+
+  if (!authDate) {
+    throw new Error('Missing Telegram auth_date')
+  }
+
+  const authTimestamp = Number(authDate)
+
+  if (!Number.isFinite(authTimestamp)) {
+    throw new Error('Invalid Telegram auth_date')
+  }
+
+  const now = Math.floor(Date.now() / 1000)
+  const maxAge = 24 * 60 * 60
+
+  if (Math.abs(now - authTimestamp) > maxAge) {
+    throw new Error('Telegram authentication data expired')
   }
 
   params.delete('hash')
@@ -111,7 +129,8 @@ Deno.serve(async (req) => {
       )
     }
 
-    const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN')
+    const botToken =
+      Deno.env.get('TELEGRAM_BOT_TOKEN')
 
     if (!botToken) {
       throw new Error(
