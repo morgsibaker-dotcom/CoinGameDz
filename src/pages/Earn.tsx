@@ -3,11 +3,16 @@ import BottomNavigation from '../components/common/BottomNavigation'
 import AdCard from '../components/earn/AdCard'
 import TaskCard from '../components/earn/TaskCard'
 import Card from '../components/common/Card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/common/Tabs'
-import { useState } from 'react'
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '../components/common/Tabs'
+import { useEffect, useState } from 'react'
 import { Task } from '../types'
 import { completeTask } from '../services/pointsService'
-import { useTelegramStore } from '../store/telegramStore'
+import { getActiveTasks } from '../services/taskService'
 import { useUserStore } from '../store/userStore'
 
 const mockAds = [
@@ -31,61 +36,54 @@ const mockAds = [
   },
 ]
 
-const mockTasks: Task[] = [
-  {
-    id: '1',
-    title: 'Daily Login',
-    description: 'Login to the app every day',
-    reward: 50,
-    icon: 'calendar',
-    completed: true,
-    category: 'click',
-  },
-  {
-    id: '2',
-    title: 'Invite Friends',
-    description: 'Invite 3 friends to join',
-    reward: 200,
-    icon: 'users',
-    completed: false,
-    category: 'click',
-  },
-  {
-    id: '3',
-    title: 'Complete Profile',
-    description: 'Fill all your profile information',
-    reward: 150,
-    icon: 'user',
-    completed: false,
-    category: 'click',
-  },
-]
-
 export default function Earn() {
   const [activeTab, setActiveTab] = useState('ads')
-  const [tasks, setTasks] = useState(mockTasks)
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [loadingTasks, setLoadingTasks] = useState(true)
 
-  const { telegramUser } = useTelegramStore()
-  const { updatePoints } = useUserStore()
+  const { user, updatePoints } = useUserStore()
+
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        const data = await getActiveTasks()
+
+        const mappedTasks: Task[] = data.map((task) => ({
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          reward: Number(task.reward_points),
+          icon: 'check',
+          completed: false,
+          category: task.category as Task['category'],
+        }))
+
+        setTasks(mappedTasks)
+      } catch (error) {
+        console.error(
+          '[CoinGameDz] Failed to load tasks',
+          error
+        )
+      } finally {
+        setLoadingTasks(false)
+      }
+    }
+
+    loadTasks()
+  }, [])
 
   const handleCompleteTask = async (task: Task) => {
-    if (!telegramUser) {
+    if (!user) {
       return
     }
 
     try {
-      const user = useUserStore.getState().user
-
-if (!user) {
-  return
-}
-
-const newBalance = await completeTask(
-  user.id,
-  task.id,
-  task.reward,
-  task.title
-)
+      const newBalance = await completeTask(
+        user.id,
+        task.id,
+        task.reward,
+        task.title
+      )
 
       updatePoints(Number(newBalance))
 
@@ -97,7 +95,10 @@ const newBalance = await completeTask(
         )
       )
     } catch (error) {
-      console.error('[CoinGameDz] Failed to complete task', error)
+      console.error(
+        '[CoinGameDz] Failed to complete task',
+        error
+      )
     }
   }
 
@@ -111,6 +112,7 @@ const newBalance = await completeTask(
             <h2 className="text-xl font-bold text-white mb-2">
               Earn Points
             </h2>
+
             <p className="text-slate-400 text-sm">
               Complete tasks and watch ads to earn points
             </p>
@@ -141,13 +143,27 @@ const newBalance = await completeTask(
           </TabsContent>
 
           <TabsContent value="tasks" className="space-y-3 mt-4">
-            {tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onComplete={() => handleCompleteTask(task)}
-              />
-            ))}
+            {loadingTasks ? (
+              <Card>
+                <p className="text-slate-400 text-sm">
+                  Loading tasks...
+                </p>
+              </Card>
+            ) : tasks.length === 0 ? (
+              <Card>
+                <p className="text-slate-400 text-sm">
+                  No tasks available.
+                </p>
+              </Card>
+            ) : (
+              tasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onComplete={() => handleCompleteTask(task)}
+                />
+              ))
+            )}
           </TabsContent>
         </Tabs>
       </div>
