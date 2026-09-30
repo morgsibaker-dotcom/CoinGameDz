@@ -30,3 +30,22 @@ export async function getAdminUsers(
 
   return (data ?? []) as AdminUser[]
 }
+
+export async function updateAdminUserStatus(
+  userId: string,
+  isActive: boolean,
+) {
+  const { data, error } = await supabase.rpc(
+    'update_admin_user_status',
+    {
+      p_user_id: userId,
+      p_is_active: isActive,
+    },
+  )
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data
+}
