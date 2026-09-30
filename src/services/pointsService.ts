@@ -1,15 +1,15 @@
 import { supabase } from '../lib/supabase'
 
-export async function addPoints(
-  userId: number,
-  amount: number,
-  type: string,
+export async function completeTask(
+  userId: string,
+  taskId: string,
+  reward: number,
   description: string
 ) {
-  const { data, error } = await supabase.rpc('add_points', {
+  const { data, error } = await supabase.rpc('complete_task', {
     p_user_id: userId,
-    p_amount: amount,
-    p_type: type,
+    p_task_id: taskId,
+    p_reward: reward,
     p_description: description,
   })
 
