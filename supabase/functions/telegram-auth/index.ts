@@ -160,6 +160,9 @@ Deno.serve(async (req) => {
       )
     }
 
+    const referralCode =
+      validatedData.start_param ?? null
+
     const supabaseUrl =
       Deno.env.get('SUPABASE_URL')
 
@@ -172,6 +175,32 @@ Deno.serve(async (req) => {
       )
     }
 
+    const existingResponse = await fetch(
+      `${supabaseUrl}/rest/v1/users?telegram_id=eq.${telegramUser.id}&select=id,telegram_id`,
+      {
+        method: 'GET',
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+        },
+      },
+    )
+
+    if (!existingResponse.ok) {
+      const errorText =
+        await existingResponse.text()
+
+      throw new Error(
+        `Failed to check existing user: ${errorText}`,
+      )
+    }
+
+    const existingUsers =
+      await existingResponse.json()
+
+    const isNewUser =
+      !existingUsers?.length
+
     const response = await fetch(
       `${supabaseUrl}/rest/v1/users?on_conflict=telegram_id`,
       {
@@ -180,7 +209,8 @@ Deno.serve(async (req) => {
           apikey: serviceRoleKey,
           Authorization: `Bearer ${serviceRoleKey}`,
           'Content-Type': 'application/json',
-          Prefer: 'resolution=merge-duplicates,return=representation',
+          Prefer:
+            'resolution=merge-duplicates,return=representation',
         },
         body: JSON.stringify({
           telegram_id: telegramUser.id,
@@ -196,7 +226,8 @@ Deno.serve(async (req) => {
     )
 
     if (!response.ok) {
-      const errorText = await response.text()
+      const errorText =
+        await response.text()
 
       throw new Error(
         `Failed to register user: ${errorText}`,
@@ -210,6 +241,31 @@ Deno.serve(async (req) => {
       throw new Error(
         'User registration returned no data',
       )
+    }
+
+    if (isNewUser && referralCode) {
+      const referralResponse = await fetch(
+        `${supabaseUrl}/rest/v1/rpc/process_referral_by_code`,
+        {
+          method: 'POST',
+          headers: {
+            apikey: serviceRoleKey,
+            Authorization: `Bearer ${serviceRoleKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            p_referral_code: referralCode,
+            p_referred_id: user.id,
+          }),
+        },
+      )
+
+      if (!referralResponse.ok) {
+        console.error(
+          '[CoinGameDz] Referral processing failed',
+          await referralResponse.text(),
+        )
+      }
     }
 
     return new Response(
