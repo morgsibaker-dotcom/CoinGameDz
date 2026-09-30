@@ -81,8 +81,6 @@ export default function Earn() {
       const newBalance = await completeTask(
         user.id,
         task.id,
-        task.reward,
-        task.title
       )
 
       updatePoints(Number(newBalance))
