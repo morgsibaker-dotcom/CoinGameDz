@@ -3,71 +3,89 @@ import BottomNavigation from '../components/common/BottomNavigation'
 import RewardCard from '../components/rewards/RewardCard'
 import Card from '../components/common/Card'
 import { Reward } from '../types'
-
-const mockRewards: Reward[] = [
-  {
-    id: '1',
-    title: 'Daily Login',
-    description: 'Login daily to earn bonus',
-    icon: '📅',
-    claimed: true,
-    claimDate: new Date(),
-    type: 'daily',
-  },
-  {
-    id: '2',
-    title: '7-Day Streak',
-    description: 'Login 7 days in a row',
-    icon: '🔥',
-    claimed: false,
-    type: 'streak',
-  },
-  {
-    id: '3',
-    title: 'Welcome Bonus',
-    description: 'Get your welcome reward',
-    icon: '🎁',
-    claimed: true,
-    claimDate: new Date('2024-01-15'),
-    type: 'welcome',
-  },
-  {
-    id: '4',
-    title: 'Mystery Gift',
-    description: 'Unlock a surprise reward',
-    icon: '🎉',
-    claimed: false,
-    type: 'gift',
-  },
-  {
-    id: '5',
-    title: 'Power User',
-    description: 'Earn 10,000 points achievement',
-    icon: '⭐',
-    claimed: true,
-    claimDate: new Date('2024-02-20'),
-    type: 'achievement',
-  },
-]
+import { getActiveRewards } from '../services/rewardService'
+import { useEffect, useState } from 'react'
 
 export default function Rewards() {
+  const [rewards, setRewards] = useState<Reward[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const loadRewards = async () => {
+      try {
+        const data = await getActiveRewards()
+
+        const mappedRewards: Reward[] = data.map((reward) => ({
+          id: reward.id,
+          title: reward.title,
+          description: reward.description,
+          icon:
+            reward.reward_type === 'welcome'
+              ? '🎁'
+              : reward.reward_type === 'daily'
+                ? '📅'
+                : reward.reward_type === 'streak'
+                  ? '🔥'
+                  : reward.reward_type === 'gift'
+                    ? '🎉'
+                    : '⭐',
+          claimed: false,
+          type: reward.reward_type as Reward['type'],
+        }))
+
+        setRewards(mappedRewards)
+      } catch (error) {
+        console.error(
+          '[CoinGameDz] Failed to load rewards',
+          error
+        )
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadRewards()
+  }, [])
+
   return (
     <div className="min-h-screen bg-slate-950 pb-24">
       <Header />
+
       <div className="p-4 space-y-3 max-w-lg mx-auto">
         <Card>
           <div>
-            <h2 className="text-xl font-bold text-white mb-2">Rewards</h2>
+            <h2 className="text-xl font-bold text-white mb-2">
+              Rewards
+            </h2>
+
             <p className="text-slate-400 text-sm">
               Collect rewards and achievements
             </p>
           </div>
         </Card>
 
-        {mockRewards.map((reward) => (
-          <RewardCard key={reward.id} reward={reward} />
-        ))}
+        {loading ? (
+          <Card>
+            <p className="text-slate-400 text-sm">
+              Loading rewards...
+            </p>
+          </Card>
+        ) : rewards.length === 0 ? (
+          <Card>
+            <p className="text-slate-400 text-sm">
+              No rewards available.
+            </p>
+          </Card>
+        ) : (
+          rewards.map((reward) => (
+            <RewardCard
+              key={reward.id}
+              reward={reward}
+            />
+          ))
+        )}
       </div>
+
       <BottomNavigation />
     </div>
   )
