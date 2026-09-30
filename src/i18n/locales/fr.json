@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "CoinGameDz",
-    "description": "Plateforme de récompenses professionnelle pour les mini-applications Telegram"
+    "description": "Plateforme professionnelle de récompenses pour Telegram Mini App"
   },
   "nav": {
     "home": "Accueil",
@@ -22,5 +22,40 @@
     "edit": "Modifier",
     "add": "Ajouter",
     "search": "Rechercher"
+  },
+  "admin": {
+    "title": "Panneau d'administration",
+    "subtitle": "Gestion de la plateforme CoinGameDz",
+    "dashboard": "Tableau de bord",
+    "users": "Utilisateurs",
+    "withdrawals": "Demandes de retrait",
+    "tasks": "Tâches",
+    "rewards": "Récompenses",
+    "wheel": "Roue de la chance",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "login": "Connexion administrateur",
+    "statistics": "Statistiques",
+    "manageUsers": "Gérer les utilisateurs",
+    "manageWithdrawals": "Gérer les demandes de retrait",
+    "manageTasks": "Gérer les tâches",
+    "manageRewards": "Gérer les récompenses",
+    "manageWheel": "Gérer les récompenses de la roue",
+    "accountSettings": "Paramètres du compte",
+    "changeEmail": "Modifier l'adresse e-mail",
+    "changePassword": "Modifier le mot de passe",
+    "newEmail": "Nouvelle adresse e-mail",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "updateEmail": "Modifier l'e-mail",
+    "updatePassword": "Modifier le mot de passe",
+    "emailUpdateRequested": "La demande de changement d'e-mail a été envoyée. Vérifiez la nouvelle adresse e-mail pour confirmer.",
+    "passwordUpdated": "Mot de passe modifié avec succès.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères.",
+    "checkingAccess": "Vérification des autorisations administrateur...",
+    "unauthorized": "Vous n'êtes pas autorisé à accéder au panneau d'administration.",
+    "adminOverview": "Vue d'ensemble de la plateforme",
+    "platformManagement": "Gérez votre plateforme CoinGameDz depuis un seul endroit."
   }
 }
