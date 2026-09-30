@@ -8,6 +8,7 @@ import {
   getClaimedRewardIds,
   claimReward,
 } from '../services/rewardService'
+import { supabase } from '../lib/supabase'
 import { useEffect, useState } from 'react'
 import { useUserStore } from '../store/userStore'
 
@@ -15,6 +16,7 @@ export default function Rewards() {
   const [rewards, setRewards] = useState<Reward[]>([])
   const [loading, setLoading] = useState(true)
   const [claiming, setClaiming] = useState<string | null>(null)
+  const [spinning, setSpinning] = useState(false)
 
   const { user, updatePoints } = useUserStore()
 
@@ -103,6 +105,53 @@ export default function Rewards() {
     }
   }
 
+  const handleSpinWheel = async () => {
+    if (!user || spinning) {
+      return
+    }
+
+    try {
+      setSpinning(true)
+
+      const { data, error } =
+        await supabase.rpc('spin_wheel', {
+          p_user_id: user.id,
+        })
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      const result = data as {
+        success: boolean
+        prize_points: number
+        prize_label: string
+        new_balance: number
+      }
+
+      updatePoints(Number(result.new_balance))
+
+      alert(
+        result.prize_points > 0
+          ? `🎉 ${result.prize_label} — +${result.prize_points} points`
+          : '😄 Try again tomorrow!'
+      )
+    } catch (error) {
+      console.error(
+        '[CoinGameDz] Failed to spin wheel',
+        error
+      )
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'You can spin again after 24 hours.'
+      )
+    } finally {
+      setSpinning(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 pb-24">
       <Header />
@@ -117,6 +166,34 @@ export default function Rewards() {
             <p className="text-slate-400 text-sm">
               Collect rewards and achievements
             </p>
+          </div>
+        </Card>
+
+        {/* Wheel of Luck */}
+        <Card gradient>
+          <div className="text-center space-y-4">
+            <div className="text-6xl">
+              🎡
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-white">
+                Wheel of Luck
+              </h3>
+
+              <p className="text-slate-400 text-sm mt-1">
+                Spin once every 24 hours and win points
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSpinWheel}
+              disabled={spinning}
+              className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {spinning ? 'Spinning...' : '🎡 Spin Now'}
+            </button>
           </div>
         </Card>
 
