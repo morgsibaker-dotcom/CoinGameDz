@@ -74,12 +74,18 @@ export default function Earn() {
     }
 
     try {
-      const newBalance = await addPoints(
-        telegramUser.id,
-        task.reward,
-        'task',
-        task.title
-      )
+      const user = useUserStore.getState().user
+
+if (!user) {
+  return
+}
+
+const newBalance = await completeTask(
+  user.id,
+  task.id,
+  task.reward,
+  task.title
+)
 
       updatePoints(Number(newBalance))
 
