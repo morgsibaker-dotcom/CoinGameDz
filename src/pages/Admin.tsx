@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  BarChart3,
   Users,
   Wallet,
   ListChecks,
@@ -11,6 +10,7 @@ import {
   Settings,
   LogOut,
   RefreshCw,
+  LucideIcon,
 } from 'lucide-react'
 import { adminLogout } from '../services/adminAuthService'
 import {
@@ -32,9 +32,7 @@ export default function Admin() {
   async function loadStats() {
     try {
       setError('')
-
       const data = await getAdminDashboardStats()
-
       setStats(data)
     } catch (error) {
       setError(
@@ -124,18 +122,12 @@ export default function Admin() {
             >
               <RefreshCw
                 size={20}
-                className={
-                  refreshing
-                    ? 'animate-spin'
-                    : ''
-                }
+                className={refreshing ? 'animate-spin' : ''}
               />
             </button>
 
             <button
-              onClick={() =>
-                navigate('/admin/settings')
-              }
+              onClick={() => navigate('/admin/settings')}
               className="rounded-xl bg-slate-800 p-3 transition hover:bg-slate-700"
               title={t('admin.settings')}
             >
@@ -254,9 +246,7 @@ export default function Admin() {
         <div className="mt-6">
           <button
             type="button"
-            onClick={() =>
-              navigate('/admin/settings')
-            }
+            onClick={() => navigate('/admin/settings')}
             className="flex w-full items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-6 text-left transition hover:border-blue-500/50 hover:bg-slate-800/80"
           >
             <div className="rounded-xl bg-slate-800 p-3 text-slate-300">
@@ -282,9 +272,7 @@ export default function Admin() {
 interface StatCardProps {
   title: string
   value: number
-  icon: React.ComponentType<{
-    size?: number
-  }>
+  icon: LucideIcon
   loading: boolean
 }
 
