@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Suspense, lazy, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import LoadingSpinner from './components/common/LoadingSpinner'
+import AdminGuard from './components/admin/AdminGuard'
 
 const Home = lazy(() => import('./pages/Home'))
 const Earn = lazy(() => import('./pages/Earn'))
@@ -42,8 +43,24 @@ function App() {
             <Route path="/profile" element={<Profile />} />
 
             <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
+
+            <Route
+              path="/admin"
+              element={
+                <AdminGuard>
+                  <Admin />
+                </AdminGuard>
+              }
+            />
+
+            <Route
+              path="/admin/settings"
+              element={
+                <AdminGuard>
+                  <AdminSettings />
+                </AdminGuard>
+              }
+            />
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
