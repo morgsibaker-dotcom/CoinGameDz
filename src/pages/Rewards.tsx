@@ -5,6 +5,7 @@ import Card from '../components/common/Card'
 import { Reward } from '../types'
 import {
   getActiveRewards,
+  getClaimedRewardIds,
   claimReward,
 } from '../services/rewardService'
 import { useEffect, useState } from 'react'
@@ -19,26 +20,38 @@ export default function Rewards() {
 
   useEffect(() => {
     const loadRewards = async () => {
-      try {
-        const data = await getActiveRewards()
+      if (!user) {
+        setLoading(false)
+        return
+      }
 
-        const mappedRewards: Reward[] = data.map((reward) => ({
-          id: reward.id,
-          title: reward.title,
-          description: reward.description,
-          icon:
-            reward.reward_type === 'welcome'
-              ? '🎁'
-              : reward.reward_type === 'daily'
-                ? '📅'
-                : reward.reward_type === 'streak'
-                  ? '🔥'
-                  : reward.reward_type === 'gift'
-                    ? '🎉'
-                    : '⭐',
-          claimed: false,
-          type: reward.reward_type as Reward['type'],
-        }))
+      try {
+        const [rewardData, claimedIds] = await Promise.all([
+          getActiveRewards(),
+          getClaimedRewardIds(user.id),
+        ])
+
+        const claimedSet = new Set(claimedIds)
+
+        const mappedRewards: Reward[] = rewardData.map(
+          (reward) => ({
+            id: reward.id,
+            title: reward.title,
+            description: reward.description,
+            icon:
+              reward.reward_type === 'welcome'
+                ? '🎁'
+                : reward.reward_type === 'daily'
+                  ? '📅'
+                  : reward.reward_type === 'streak'
+                    ? '🔥'
+                    : reward.reward_type === 'gift'
+                      ? '🎉'
+                      : '⭐',
+            claimed: claimedSet.has(reward.id),
+            type: reward.reward_type as Reward['type'],
+          })
+        )
 
         setRewards(mappedRewards)
       } catch (error) {
@@ -52,10 +65,10 @@ export default function Rewards() {
     }
 
     loadRewards()
-  }, [])
+  }, [user])
 
   const handleClaimReward = async (reward: Reward) => {
-    if (!user || claiming) {
+    if (!user || reward.claimed || claiming) {
       return
     }
 
