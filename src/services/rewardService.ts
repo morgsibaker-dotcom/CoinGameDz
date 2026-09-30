@@ -14,6 +14,19 @@ export async function getActiveRewards() {
   return data ?? []
 }
 
+export async function getClaimedRewardIds(userId: string) {
+  const { data, error } = await supabase
+    .from('reward_claims')
+    .select('reward_id')
+    .eq('user_id', userId)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return (data ?? []).map((item) => item.reward_id)
+}
+
 export async function claimReward(
   userId: string,
   rewardId: string
