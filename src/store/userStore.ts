@@ -34,21 +34,24 @@ export const useUserStore = create<UserStore>((set) => ({
       }
 
       const user: User = {
-        id: String(dbUser.telegram_id),
+        id: String(dbUser.id),
         username: dbUser.username ?? '',
-        avatar: '',
-        points: dbUser.points ?? 0,
-        level: dbUser.level ?? 1,
-        usdEquivalent: (dbUser.points ?? 0) / 1000,
+        avatar: dbUser.avatar_url ?? '',
+        points: Number(dbUser.points_balance ?? 0),
+        level: Number(dbUser.level ?? 1),
+        usdEquivalent: Number(dbUser.usd_equivalent ?? 0),
         joinDate: new Date(dbUser.created_at),
         referralCode: dbUser.referral_code ?? '',
-        referralCount: dbUser.referral_count ?? 0,
-        referralEarnings: dbUser.referral_earnings ?? 0,
+        referralCount: 0,
+        referralEarnings: 0,
       }
 
       set({ user })
     } catch (error) {
-      console.error('[CoinGameDz] Failed to load user', error)
+      console.error(
+        '[CoinGameDz] Failed to load user',
+        error
+      )
     } finally {
       set({ isLoading: false })
     }
