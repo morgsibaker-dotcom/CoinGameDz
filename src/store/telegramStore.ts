@@ -86,8 +86,6 @@ export const useTelegramStore = create<TelegramStore>((set) => ({
       const telegramUser =
         data.user as TelegramUser
 
-      await registerTelegramUser(telegramUser)
-
       set({
         telegramUser,
         telegramLanguageCode:
