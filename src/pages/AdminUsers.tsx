@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import {
   getAdminUsers,
+  updateAdminUserStatus,
   AdminUser,
 } from '../services/adminUsersService'
 
@@ -18,6 +19,7 @@ export default function AdminUsers() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null)
 
   async function loadUsers(value = '') {
     try {
@@ -43,6 +45,37 @@ export default function AdminUsers() {
 
   function handleSearch() {
     loadUsers(search)
+  }
+
+  async function handleStatusChange(user: AdminUser) {
+    try {
+      setUpdatingUserId(user.id)
+      setError('')
+
+      await updateAdminUserStatus(
+        user.id,
+        !user.is_active,
+      )
+
+      setUsers((currentUsers) =>
+        currentUsers.map((item) =>
+          item.id === user.id
+            ? {
+                ...item,
+                is_active: !item.is_active,
+              }
+            : item,
+        ),
+      )
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to update user status',
+      )
+    } finally {
+      setUpdatingUserId(null)
+    }
   }
 
   return (
@@ -110,7 +143,7 @@ export default function AdminUsers() {
           </div>
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900">
-            <table className="w-full min-w-[900px] text-left">
+            <table className="w-full min-w-[1050px] text-left">
               <thead className="border-b border-slate-800">
                 <tr className="text-sm text-slate-400">
                   <th className="px-4 py-4">User</th>
@@ -120,6 +153,7 @@ export default function AdminUsers() {
                   <th className="px-4 py-4">Level</th>
                   <th className="px-4 py-4">Referrals</th>
                   <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4">Action</th>
                 </tr>
               </thead>
 
@@ -174,6 +208,27 @@ export default function AdminUsers() {
                           Disabled
                         </span>
                       )}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <button
+                        type="button"
+                        disabled={updatingUserId === user.id}
+                        onClick={() =>
+                          handleStatusChange(user)
+                        }
+                        className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                          user.is_active
+                            ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                            : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+                        } disabled:cursor-not-allowed disabled:opacity-50`}
+                      >
+                        {updatingUserId === user.id
+                          ? 'Updating...'
+                          : user.is_active
+                            ? 'Disable'
+                            : 'Enable'}
+                      </button>
                     </td>
                   </tr>
                 ))}
