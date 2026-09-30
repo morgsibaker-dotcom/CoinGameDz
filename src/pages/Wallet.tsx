@@ -1,13 +1,24 @@
 import Header from '../components/common/Header'
 import BottomNavigation from '../components/common/BottomNavigation'
 import Card from '../components/common/Card'
-import TransactionItem from '../components/wallet/TransactionItem'
 import Button from '../components/common/Button'
 import { useUserStore } from '../store/userStore'
-import { Transaction, WithdrawalMethod } from '../types'
+import { WithdrawalMethod } from '../types'
 import { Wallet as WalletIcon, CreditCard, X } from 'lucide-react'
-import { useState } from 'react'
-import { createWithdrawalRequest } from '../services/withdrawalService'
+import { useEffect, useState } from 'react'
+import {
+  createWithdrawalRequest,
+  getWithdrawalRequests,
+} from '../services/withdrawalService'
+
+interface WithdrawalRequest {
+  id: string
+  amount_points: number
+  amount_usd: number
+  method: string
+  status: string
+  created_at: string
+}
 
 const withdrawalMethods: WithdrawalMethod[] = [
   {
@@ -44,8 +55,6 @@ const withdrawalMethods: WithdrawalMethod[] = [
   },
 ]
 
-const transactions: Transaction[] = []
-
 export default function Wallet() {
   const { user, updatePoints } = useUserStore()
 
@@ -62,12 +71,46 @@ export default function Wallet() {
   const [message, setMessage] =
     useState<string | null>(null)
 
+  const [withdrawals, setWithdrawals] =
+    useState<WithdrawalRequest[]>([])
+
+  const [loadingWithdrawals, setLoadingWithdrawals] =
+    useState(true)
+
+  useEffect(() => {
+    const loadWithdrawals = async () => {
+      if (!user) {
+        setLoadingWithdrawals(false)
+        return
+      }
+
+      try {
+        const data = await getWithdrawalRequests(
+          user.id,
+        )
+
+        setWithdrawals(data)
+      } catch (error) {
+        console.error(
+          '[CoinGameDz] Failed to load withdrawals',
+          error,
+        )
+      } finally {
+        setLoadingWithdrawals(false)
+      }
+    }
+
+    loadWithdrawals()
+  }, [user])
+
   if (!user) return null
 
   const selectedAmount = Number(amount)
 
   const getAccountLabel = () => {
-    if (!selectedMethod) return 'Account details'
+    if (!selectedMethod) {
+      return 'Account details'
+    }
 
     switch (selectedMethod.id) {
       case 'baridimob':
@@ -91,7 +134,9 @@ export default function Wallet() {
     setMessage(null)
 
     if (!selectedMethod) {
-      setMessage('Please select a withdrawal method.')
+      setMessage(
+        'Please select a withdrawal method.',
+      )
       return
     }
 
@@ -118,7 +163,9 @@ export default function Wallet() {
     }
 
     if (!accountDetails.trim()) {
-      setMessage('Please enter your account details.')
+      setMessage(
+        'Please enter your account details.',
+      )
       return
     }
 
@@ -138,6 +185,11 @@ export default function Wallet() {
         user.points - selectedAmount,
       )
 
+      const updatedWithdrawals =
+        await getWithdrawalRequests(user.id)
+
+      setWithdrawals(updatedWithdrawals)
+
       setMessage(
         'Withdrawal request submitted successfully.',
       )
@@ -153,6 +205,41 @@ export default function Wallet() {
       )
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'Pending'
+
+      case 'processing':
+        return 'Processing'
+
+      case 'completed':
+        return 'Completed'
+
+      case 'rejected':
+        return 'Rejected'
+
+      default:
+        return status
+    }
+  }
+
+  const getStatusClass = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-400'
+
+      case 'rejected':
+        return 'text-red-400'
+
+      case 'processing':
+        return 'text-yellow-400'
+
+      default:
+        return 'text-blue-400'
     }
   }
 
@@ -333,25 +420,60 @@ export default function Wallet() {
           </Card>
         )}
 
-        {/* Transaction History */}
+        {/* Withdrawal History */}
         <div>
           <h3 className="text-lg font-bold text-white mb-3">
-            Transaction History
+            Withdrawal History
           </h3>
 
-          {transactions.length === 0 ? (
+          {loadingWithdrawals ? (
             <Card>
               <p className="text-slate-400 text-sm text-center">
-                No transactions yet.
+                Loading withdrawals...
+              </p>
+            </Card>
+          ) : withdrawals.length === 0 ? (
+            <Card>
+              <p className="text-slate-400 text-sm text-center">
+                No withdrawal requests yet.
               </p>
             </Card>
           ) : (
             <div className="space-y-2">
-              {transactions.map((transaction) => (
-                <TransactionItem
-                  key={transaction.id}
-                  transaction={transaction}
-                />
+              {withdrawals.map((withdrawal) => (
+                <Card key={withdrawal.id}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-white">
+                        {withdrawal.method}
+                      </p>
+
+                      <p className="text-xs text-slate-400 mt-1">
+                        {withdrawal.amount_points.toLocaleString()} pts
+                        {' • '}
+                        ${Number(
+                          withdrawal.amount_usd,
+                        ).toFixed(2)}
+                      </p>
+
+                      <p className="text-xs text-slate-500 mt-1">
+                        {new Date(
+                          withdrawal.created_at,
+                        ).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`text-sm font-semibold ${getStatusClass(
+                        withdrawal.status,
+                      )}`}
+                    >
+                      {getStatusText(
+                        withdrawal.status,
+                      )}
+                    </span>
+                  </div>
+                </Card>
               ))}
             </div>
           )}
