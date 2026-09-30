@@ -27,4 +27,12 @@ export function getTelegramUser(): TelegramUser | null {
 
 export function getTelegramLanguageCode(): string | null {
   return getTelegramUser()?.language_code ?? null
+export function getSafeAreaInsets() {
+  const webApp = getTelegramWebApp()
+
+  return {
+    top: webApp?.safeAreaInset?.top ?? 0,
+    bottom: webApp?.safeAreaInset?.bottom ?? 0,
+    left: webApp?.safeAreaInset?.left ?? 0,
+    right: webApp?.safeAreaInset?.right ?? 0,
 }
