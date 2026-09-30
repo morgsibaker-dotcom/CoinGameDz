@@ -10,6 +10,7 @@ const Referrals = lazy(() => import('./pages/Referrals'))
 const Wallet = lazy(() => import('./pages/Wallet'))
 const Profile = lazy(() => import('./pages/Profile'))
 const AdminLogin = lazy(() => import('./pages/AdminLogin'))
+const AdminSettings = lazy(() => import('./pages/AdminSettings'))
 const NotFoundPage = lazy(() => import('./pages/NotFound'))
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
 
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
