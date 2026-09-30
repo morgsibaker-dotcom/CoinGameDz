@@ -22,3 +22,23 @@ export async function createWithdrawalRequest(
 
   return data
 }
+
+export async function getWithdrawalRequests(
+  userId: string,
+) {
+  const { data, error } = await supabase
+    .from('withdrawal_requests')
+    .select(
+      'id, amount_points, amount_usd, method, status, created_at',
+    )
+    .eq('user_id', userId)
+    .order('created_at', {
+      ascending: false,
+    })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data ?? []
+}
