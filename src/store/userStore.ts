@@ -34,17 +34,17 @@ export const useUserStore = create<UserStore>((set) => ({
       }
 
       const user: User = {
-  id: String(dbUser.id),
-  username: dbUser.username ?? '',
-  avatar: dbUser.avatar_url ?? '',
-  points: Number(dbUser.points_balance ?? 0),
-  level: Number(dbUser.level ?? 1),
-  usdEquivalent: Number(dbUser.usd_equivalent ?? 0),
-  joinDate: new Date(dbUser.created_at),
-  referralCode: dbUser.referral_code ?? '',
-  referralCount: 0,
-  referralEarnings: 0,
-}
+        id: String(dbUser.id),
+        username: dbUser.username ?? '',
+        avatar: dbUser.avatar_url ?? '',
+        points: Number(dbUser.points_balance ?? 0),
+        level: Number(dbUser.level ?? 1),
+        usdEquivalent: Number(dbUser.usd_equivalent ?? 0),
+        joinDate: new Date(dbUser.created_at),
+        referralCode: dbUser.referral_code ?? '',
+        referralCount: 0,
+        referralEarnings: 0,
+      }
 
       set({ user })
     } catch (error) {
