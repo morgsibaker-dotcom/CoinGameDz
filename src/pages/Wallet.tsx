@@ -5,7 +5,9 @@ import TransactionItem from '../components/wallet/TransactionItem'
 import Button from '../components/common/Button'
 import { useUserStore } from '../store/userStore'
 import { Transaction, WithdrawalMethod } from '../types'
-import { Wallet as WalletIcon, CreditCard } from 'lucide-react'
+import { Wallet as WalletIcon, CreditCard, X } from 'lucide-react'
+import { useState } from 'react'
+import { createWithdrawalRequest } from '../services/withdrawalService'
 
 const withdrawalMethods: WithdrawalMethod[] = [
   {
@@ -42,19 +44,124 @@ const withdrawalMethods: WithdrawalMethod[] = [
   },
 ]
 
-const mockTransactions: Transaction[] = []
+const transactions: Transaction[] = []
 
 export default function Wallet() {
-  const { user } = useUserStore()
+  const { user, updatePoints } = useUserStore()
+
+  const [selectedMethod, setSelectedMethod] =
+    useState<WithdrawalMethod | null>(null)
+
+  const [amount, setAmount] = useState('')
+  const [accountDetails, setAccountDetails] =
+    useState('')
+
+  const [submitting, setSubmitting] =
+    useState(false)
+
+  const [message, setMessage] =
+    useState<string | null>(null)
 
   if (!user) return null
+
+  const selectedAmount = Number(amount)
+
+  const getAccountLabel = () => {
+    if (!selectedMethod) return 'Account details'
+
+    switch (selectedMethod.id) {
+      case 'baridimob':
+        return 'BaridiMob account number'
+
+      case 'paypal':
+        return 'PayPal email'
+
+      case 'visa':
+        return 'Visa payment details'
+
+      case 'usdt-ton':
+        return 'USDT TON wallet address'
+
+      default:
+        return 'Account details'
+    }
+  }
+
+  const submitWithdrawal = async () => {
+    setMessage(null)
+
+    if (!selectedMethod) {
+      setMessage('Please select a withdrawal method.')
+      return
+    }
+
+    if (
+      !Number.isFinite(selectedAmount) ||
+      selectedAmount < selectedMethod.minAmount
+    ) {
+      setMessage(
+        `Minimum withdrawal is ${selectedMethod.minAmount.toLocaleString()} points.`,
+      )
+      return
+    }
+
+    if (selectedAmount > user.points) {
+      setMessage('Insufficient points balance.')
+      return
+    }
+
+    if (
+      selectedAmount > selectedMethod.maxAmount
+    ) {
+      setMessage('Withdrawal amount is too high.')
+      return
+    }
+
+    if (!accountDetails.trim()) {
+      setMessage('Please enter your account details.')
+      return
+    }
+
+    try {
+      setSubmitting(true)
+
+      await createWithdrawalRequest(
+        user.id,
+        selectedAmount,
+        selectedMethod.id,
+        {
+          account: accountDetails.trim(),
+        },
+      )
+
+      updatePoints(
+        user.points - selectedAmount,
+      )
+
+      setMessage(
+        'Withdrawal request submitted successfully.',
+      )
+
+      setAmount('')
+      setAccountDetails('')
+      setSelectedMethod(null)
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'Failed to submit withdrawal request.',
+      )
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 pb-24">
       <Header />
 
       <div className="p-4 space-y-4 max-w-lg mx-auto">
-        {/* Balance Overview */}
+        {/* Balance */}
         <Card gradient>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -116,6 +223,9 @@ export default function Wallet() {
                   <Button
                     size="sm"
                     variant="primary"
+                    onClick={() =>
+                      setSelectedMethod(method)
+                    }
                   >
                     <CreditCard className="w-4 h-4" />
                   </Button>
@@ -125,13 +235,111 @@ export default function Wallet() {
           </div>
         </div>
 
+        {/* Withdrawal Form */}
+        {selectedMethod && (
+          <Card gradient>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-white">
+                  Withdraw via {selectedMethod.name}
+                </h3>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedMethod(null)
+                  }
+                  className="text-slate-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div>
+                <label className="text-sm text-slate-400">
+                  Amount in points
+                </label>
+
+                <input
+                  type="number"
+                  min={selectedMethod.minAmount}
+                  max={Math.min(
+                    selectedMethod.maxAmount,
+                    user.points,
+                  )}
+                  value={amount}
+                  onChange={(event) =>
+                    setAmount(event.target.value)
+                  }
+                  placeholder="1000"
+                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-slate-400">
+                  {getAccountLabel()}
+                </label>
+
+                <input
+                  type={
+                    selectedMethod.id === 'paypal'
+                      ? 'email'
+                      : 'text'
+                  }
+                  value={accountDetails}
+                  onChange={(event) =>
+                    setAccountDetails(
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Enter your details"
+                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {amount && (
+                <div className="rounded-xl bg-slate-900 p-3">
+                  <p className="text-xs text-slate-400">
+                    Withdrawal value
+                  </p>
+
+                  <p className="text-lg font-semibold text-green-400">
+                    $
+                    {(
+                      selectedAmount / 1000
+                    ).toFixed(2)}
+                  </p>
+                </div>
+              )}
+
+              {message && (
+                <div className="rounded-xl bg-slate-900 p-3 text-sm text-slate-300">
+                  {message}
+                </div>
+              )}
+
+              <Button
+                variant="success"
+                className="w-full"
+                disabled={submitting}
+                onClick={submitWithdrawal}
+              >
+                {submitting
+                  ? 'Submitting...'
+                  : 'Request Withdrawal'}
+              </Button>
+            </div>
+          </Card>
+        )}
+
         {/* Transaction History */}
         <div>
           <h3 className="text-lg font-bold text-white mb-3">
             Transaction History
           </h3>
 
-          {mockTransactions.length === 0 ? (
+          {transactions.length === 0 ? (
             <Card>
               <p className="text-slate-400 text-sm text-center">
                 No transactions yet.
@@ -139,7 +347,7 @@ export default function Wallet() {
             </Card>
           ) : (
             <div className="space-y-2">
-              {mockTransactions.map((transaction) => (
+              {transactions.map((transaction) => (
                 <TransactionItem
                   key={transaction.id}
                   transaction={transaction}
