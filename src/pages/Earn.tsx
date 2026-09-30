@@ -6,7 +6,7 @@ import Card from '../components/common/Card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/common/Tabs'
 import { useState } from 'react'
 import { Task } from '../types'
-import { addPoints } from '../services/pointsService'
+import { completeTask } from '../services/pointsService'
 import { useTelegramStore } from '../store/telegramStore'
 import { useUserStore } from '../store/userStore'
 
