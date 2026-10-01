@@ -3,21 +3,38 @@ import BottomNavigation from '../components/common/BottomNavigation'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import { useUserStore } from '../store/userStore'
-import { Copy, Users, TrendingUp } from 'lucide-react'
+import { Copy, Users, TrendingUp, Share2 } from 'lucide-react'
 import { useState } from 'react'
+
+const BOT_USERNAME = 'CoinGameDz_Bot'
 
 export default function Referrals() {
   const { user } = useUserStore()
   const [copied, setCopied] = useState(false)
+  const [shared, setShared] = useState(false)
 
   if (!user) return null
 
   const referrals = user.referralCount
-  const rewardsEarned = Math.floor(referrals / 10) * 100
+  const rewardsEarned =
+    Math.floor(referrals / 10) * 100
+
+  const referralCode = user.referralCode
+
+  const referralLink = referralCode
+    ? `https://t.me/${BOT_USERNAME}?startapp=ref_${encodeURIComponent(
+        referralCode
+      )}`
+    : ''
 
   const copyToClipboard = async () => {
+    if (!referralLink) return
+
     try {
-      await navigator.clipboard.writeText(user.referralCode)
+      await navigator.clipboard.writeText(
+        referralLink
+      )
+
       setCopied(true)
 
       setTimeout(() => {
@@ -25,10 +42,30 @@ export default function Referrals() {
       }, 2000)
     } catch (error) {
       console.error(
-        '[CoinGameDz] Failed to copy referral code',
+        '[CoinGameDz] Failed to copy referral link',
         error
       )
     }
+  }
+
+  const shareReferral = () => {
+    if (!referralLink) return
+
+    const text =
+      'Join CoinGameDz and earn points with me! 🎮💰'
+
+    const shareUrl =
+      `https://t.me/share/url?url=${encodeURIComponent(
+        referralLink
+      )}&text=${encodeURIComponent(text)}`
+
+    window.open(shareUrl, '_blank')
+
+    setShared(true)
+
+    setTimeout(() => {
+      setShared(false)
+    }, 2000)
   }
 
   return (
@@ -55,8 +92,8 @@ export default function Referrals() {
             </h3>
 
             <div className="flex items-center gap-2 bg-slate-900 p-3 rounded-lg">
-              <code className="flex-1 text-blue-400 font-mono text-sm">
-                {user.referralCode}
+              <code className="flex-1 text-blue-400 font-mono text-sm break-all">
+                {referralCode || 'Generating...'}
               </code>
 
               <Button
@@ -64,10 +101,20 @@ export default function Referrals() {
                 variant="secondary"
                 onClick={copyToClipboard}
                 icon={<Copy className="w-4 h-4" />}
+                disabled={!referralCode}
               >
                 {copied ? 'Copied' : 'Copy'}
               </Button>
             </div>
+
+            <Button
+              className="w-full"
+              onClick={shareReferral}
+              icon={<Share2 className="w-4 h-4" />}
+              disabled={!referralCode}
+            >
+              {shared ? 'Shared ✓' : 'Share Referral Link'}
+            </Button>
           </div>
         </Card>
 
@@ -111,14 +158,14 @@ export default function Referrals() {
               <li className="flex items-start gap-2">
                 <span className="text-blue-400 font-bold">1</span>
                 <span>
-                  Share your referral code with friends
+                  Share your referral link with friends
                 </span>
               </li>
 
               <li className="flex items-start gap-2">
                 <span className="text-blue-400 font-bold">2</span>
                 <span>
-                  They register using your referral link
+                  Your friend opens CoinGameDz using your link
                 </span>
               </li>
 
