@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import {
   Users,
   Wallet,
-  ListChecks,
+  ListTodo,
   Gift,
   CircleDot,
   Settings,
   LogOut,
   RefreshCw,
-  LucideIcon,
 } from 'lucide-react'
-import { adminLogout } from '../services/adminAuthService'
+import { useTranslation } from 'react-i18next'
+import {
+  adminLogout,
+} from '../services/adminAuthService'
 import {
   getAdminDashboardStats,
   AdminDashboardStats,
@@ -22,27 +23,32 @@ export default function Admin() {
   const navigate = useNavigate()
   const { t } = useTranslation()
 
-  const [loggingOut, setLoggingOut] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [error, setError] = useState('')
   const [stats, setStats] =
     useState<AdminDashboardStats | null>(null)
 
+  const [loading, setLoading] =
+    useState(true)
+
+  const [error, setError] =
+    useState('')
+
   async function loadStats() {
     try {
+      setLoading(true)
       setError('')
-      const data = await getAdminDashboardStats()
+
+      const data =
+        await getAdminDashboardStats()
+
       setStats(data)
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
-          : t('common.error'),
+          : 'Failed to load dashboard',
       )
     } finally {
       setLoading(false)
-      setRefreshing(false)
     }
   }
 
@@ -50,14 +56,7 @@ export default function Admin() {
     loadStats()
   }, [])
 
-  async function handleRefresh() {
-    setRefreshing(true)
-    await loadStats()
-  }
-
   async function handleLogout() {
-    setLoggingOut(true)
-
     try {
       await adminLogout()
       navigate('/admin/login')
@@ -66,204 +65,239 @@ export default function Admin() {
         '[CoinGameDz] Admin logout failed',
         error,
       )
-    } finally {
-      setLoggingOut(false)
     }
   }
 
-  const sections = [
+  const menuItems = [
     {
-      title: t('admin.users'),
-      description: t('admin.manageUsers'),
+      title: 'Users',
+      description: 'Manage registered users',
       icon: Users,
+      path: '/admin/users',
     },
     {
-      title: t('admin.withdrawals'),
-      description: t('admin.manageWithdrawals'),
+      title: 'Withdrawals',
+      description: 'Manage withdrawal requests',
       icon: Wallet,
+      path: '/admin/withdrawals',
     },
     {
-      title: t('admin.tasks'),
-      description: t('admin.manageTasks'),
-      icon: ListChecks,
+      title: 'Tasks',
+      description: 'Create and manage earning tasks',
+      icon: ListTodo,
+      path: '/admin/tasks',
     },
     {
-      title: t('admin.rewards'),
-      description: t('admin.manageRewards'),
+      title: 'Rewards',
+      description: 'Manage rewards and bonuses',
       icon: Gift,
+      path: '/admin/rewards',
     },
     {
-      title: t('admin.wheel'),
-      description: t('admin.manageWheel'),
+      title: 'Wheel',
+      description: 'Manage Wheel of Luck prizes',
       icon: CircleDot,
+      path: '/admin/wheel',
+    },
+    {
+      title: 'Settings',
+      description: 'Admin account settings',
+      icon: Settings,
+      path: '/admin/settings',
     },
   ]
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      <header className="border-b border-slate-800 bg-slate-900/80 px-4 py-4">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+
+      {/* Header */}
+      <header className="border-b border-slate-800 bg-slate-900">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+
           <div>
             <h1 className="text-2xl font-bold">
-              {t('admin.title')}
+              CoinGameDz Admin
             </h1>
 
-            <p className="mt-1 text-sm text-slate-400">
-              {t('admin.subtitle')}
+            <p className="text-sm text-slate-400">
+              Administration Dashboard
             </p>
           </div>
 
           <div className="flex items-center gap-2">
+
             <button
-              onClick={handleRefresh}
-              disabled={refreshing || loading}
-              className="rounded-xl bg-slate-800 p-3 transition hover:bg-slate-700 disabled:opacity-50"
-              title={t('common.search')}
+              type="button"
+              onClick={loadStats}
+              disabled={loading}
+              className="rounded-xl bg-slate-800 p-3 hover:bg-slate-700 disabled:opacity-50"
+              title="Refresh"
             >
               <RefreshCw
-                size={20}
-                className={refreshing ? 'animate-spin' : ''}
+                size={19}
+                className={
+                  loading
+                    ? 'animate-spin'
+                    : ''
+                }
               />
             </button>
 
             <button
-              onClick={() => navigate('/admin/settings')}
-              className="rounded-xl bg-slate-800 p-3 transition hover:bg-slate-700"
-              title={t('admin.settings')}
+              type="button"
+              onClick={handleLogout}
+              className="flex items-center gap-2 rounded-xl bg-red-500/10 px-4 py-3 text-red-400 hover:bg-red-500/20"
             >
-              <Settings size={20} />
+              <LogOut size={18} />
+              Logout
             </button>
 
-            <button
-              onClick={handleLogout}
-              disabled={loggingOut}
-              className="rounded-xl bg-red-600/90 p-3 transition hover:bg-red-600 disabled:opacity-50"
-              title={t('admin.logout')}
-            >
-              <LogOut size={20} />
-            </button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold">
-            {t('admin.dashboard')}
-          </h2>
+      <main className="mx-auto max-w-7xl px-4 py-8">
 
-          <p className="mt-2 text-slate-400">
-            {t('admin.platformManagement')}
-          </p>
-        </div>
-
+        {/* Error */}
         {error && (
           <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-red-400">
             {error}
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title={t('admin.users')}
-            value={stats?.users_count ?? 0}
-            icon={Users}
-            loading={loading}
-          />
+        {/* Statistics */}
+        <section className="mb-8">
 
-          <StatCard
-            title={t('admin.tasks')}
-            value={stats?.active_tasks_count ?? 0}
-            icon={ListChecks}
-            loading={loading}
-          />
+          <h2 className="mb-4 text-xl font-bold">
+            Dashboard
+          </h2>
 
-          <StatCard
-            title={t('admin.rewards')}
-            value={stats?.active_rewards_count ?? 0}
-            icon={Gift}
-            loading={loading}
-          />
+          {loading && !stats ? (
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center text-slate-400">
+              Loading dashboard...
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-          <StatCard
-            title={t('admin.withdrawals')}
-            value={stats?.pending_withdrawals_count ?? 0}
-            icon={Wallet}
-            loading={loading}
-          />
-        </div>
+              <StatCard
+                title="Total Users"
+                value={stats?.users_count ?? 0}
+                subtitle={`${stats?.active_users_count ?? 0} active`}
+                icon={Users}
+              />
 
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <InfoCard
-            title="Total Points"
-            value={stats?.total_points ?? 0}
-            loading={loading}
-          />
+              <StatCard
+                title="Tasks"
+                value={stats?.tasks_count ?? 0}
+                subtitle={`${stats?.active_tasks_count ?? 0} active`}
+                icon={ListTodo}
+              />
 
-          <InfoCard
-            title="Withdrawal Requests"
-            value={stats?.withdrawals_count ?? 0}
-            loading={loading}
-          />
+              <StatCard
+                title="Rewards"
+                value={stats?.rewards_count ?? 0}
+                subtitle={`${stats?.active_rewards_count ?? 0} active`}
+                icon={Gift}
+              />
 
-          <InfoCard
-            title="Processed USD"
-            value={`$${Number(
-              stats?.total_withdrawal_usd ?? 0,
-            ).toFixed(2)}`}
-            loading={loading}
-          />
-        </div>
+              <StatCard
+                title="Withdrawals"
+                value={
+                  stats?.withdrawals_count ?? 0
+                }
+                subtitle={`${stats?.pending_withdrawals_count ?? 0} pending`}
+                icon={Wallet}
+              />
 
-        <div className="mt-8">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {sections.map((section) => {
-              const Icon = section.icon
+            </div>
+          )}
+        </section>
+
+        {/* Financial / Points Stats */}
+        <section className="mb-8">
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+
+              <p className="text-sm text-slate-400">
+                Total User Points
+              </p>
+
+              <p className="mt-2 text-3xl font-bold">
+                {Number(
+                  stats?.total_points ?? 0,
+                ).toLocaleString()}
+              </p>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Current points held by users
+              </p>
+
+            </div>
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+
+              <p className="text-sm text-slate-400">
+                Withdrawals Value
+              </p>
+
+              <p className="mt-2 text-3xl font-bold">
+                $
+                {Number(
+                  stats?.total_withdrawal_usd ?? 0,
+                ).toFixed(2)}
+              </p>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Processing + completed withdrawals
+              </p>
+
+            </div>
+
+          </div>
+        </section>
+
+        {/* Management */}
+        <section>
+
+          <h2 className="mb-4 text-xl font-bold">
+            Management
+          </h2>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+            {menuItems.map((item) => {
+              const Icon = item.icon
 
               return (
                 <button
-                  key={section.title}
+                  key={item.path}
                   type="button"
-                  className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-left transition hover:border-blue-500/50 hover:bg-slate-800/80"
+                  onClick={() =>
+                    navigate(item.path)
+                  }
+                  className="group rounded-2xl border border-slate-800 bg-slate-900 p-5 text-left transition hover:border-blue-500/50 hover:bg-slate-800"
                 >
-                  <div className="mb-4 inline-flex rounded-xl bg-blue-600/10 p-3 text-blue-400">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20">
                     <Icon size={24} />
                   </div>
 
-                  <h3 className="text-lg font-semibold">
-                    {section.title}
+                  <h3 className="text-lg font-bold">
+                    {item.title}
                   </h3>
 
-                  <p className="mt-2 text-sm text-slate-400">
-                    {section.description}
+                  <p className="mt-1 text-sm text-slate-400">
+                    {item.description}
                   </p>
                 </button>
               )
             })}
+
           </div>
-        </div>
 
-        <div className="mt-6">
-          <button
-            type="button"
-            onClick={() => navigate('/admin/settings')}
-            className="flex w-full items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-6 text-left transition hover:border-blue-500/50 hover:bg-slate-800/80"
-          >
-            <div className="rounded-xl bg-slate-800 p-3 text-slate-300">
-              <Settings size={24} />
-            </div>
+        </section>
 
-            <div>
-              <h3 className="text-lg font-semibold">
-                {t('admin.settings')}
-              </h3>
-
-              <p className="mt-1 text-sm text-slate-400">
-                {t('admin.accountSettings')}
-              </p>
-            </div>
-          </button>
-        </div>
       </main>
     </div>
   )
@@ -272,57 +306,41 @@ export default function Admin() {
 interface StatCardProps {
   title: string
   value: number
-  icon: LucideIcon
-  loading: boolean
+  subtitle: string
+  icon: typeof Users
 }
 
 function StatCard({
   title,
   value,
+  subtitle,
   icon: Icon,
-  loading,
 }: StatCardProps) {
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-      <div className="flex items-center justify-between">
+
+      <div className="flex items-start justify-between">
+
         <div>
           <p className="text-sm text-slate-400">
             {title}
           </p>
 
           <p className="mt-2 text-3xl font-bold">
-            {loading ? '...' : value.toLocaleString()}
+            {Number(value).toLocaleString()}
+          </p>
+
+          <p className="mt-1 text-xs text-slate-500">
+            {subtitle}
           </p>
         </div>
 
-        <div className="rounded-xl bg-blue-600/10 p-3 text-blue-400">
-          <Icon size={24} />
+        <div className="rounded-xl bg-blue-500/10 p-3 text-blue-400">
+          <Icon size={22} />
         </div>
+
       </div>
-    </div>
-  )
-}
 
-interface InfoCardProps {
-  title: string
-  value: number | string
-  loading: boolean
-}
-
-function InfoCard({
-  title,
-  value,
-  loading,
-}: InfoCardProps) {
-  return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-      <p className="text-sm text-slate-400">
-        {title}
-      </p>
-
-      <p className="mt-2 text-2xl font-bold">
-        {loading ? '...' : value}
-      </p>
     </div>
   )
 }
