@@ -1,36 +1,23 @@
+import Header from '../components/common/Header'
+
 export default function Home() {
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#0f172a',
-        color: '#ffffff',
-        padding: '30px 20px',
-        fontFamily: 'Arial',
-        textAlign: 'center',
-      }}
-    >
-      <h1>🎮 CoinGameDz</h1>
+    <div className="min-h-screen bg-slate-950 text-white">
+      <Header />
 
-      <div style={{ marginTop: '30px' }}>
-        <h2>واجهة اللعبة الرئيسية</h2>
-        <p>Home يعمل بنجاح ✅</p>
+      <div className="p-6 text-center">
+        <h1 className="text-3xl font-bold">
+          🎮 CoinGameDz
+        </h1>
+
+        <p className="mt-4 text-green-400">
+          الواجهة تعمل بنجاح ✅
+        </p>
+
+        <button className="mt-8 rounded-2xl bg-green-500 px-8 py-4 text-lg font-bold">
+          🎮 العب واربح
+        </button>
       </div>
-
-      <button
-        style={{
-          marginTop: '30px',
-          padding: '15px 30px',
-          borderRadius: '12px',
-          border: 'none',
-          background: '#22c55e',
-          color: '#fff',
-          fontSize: '18px',
-          fontWeight: 'bold',
-        }}
-      >
-        🎮 العب واربح
-      </button>
     </div>
   )
 }
