@@ -1,6 +1,7 @@
 import Header from '../components/common/Header'
 import BalanceCard from '../components/home/BalanceCard'
 import StatsCard from '../components/home/StatsCard'
+import QuickActionButtons from '../components/home/QuickActionButtons'
 
 export default function Home() {
   return (
@@ -16,9 +17,7 @@ export default function Home() {
 
         <StatsCard />
 
-        <button className="w-full rounded-2xl bg-green-500 px-8 py-4 text-lg font-bold">
-          🎮 العب واربح
-        </button>
+        <QuickActionButtons />
       </div>
     </div>
   )
