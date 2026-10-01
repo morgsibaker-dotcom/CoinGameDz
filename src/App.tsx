@@ -4,17 +4,16 @@ export default function App() {
       style={{
         minHeight: '100vh',
         background: '#0f172a',
-        color: '#ffffff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
+        color: '#fff',
+        padding: '40px 20px',
         fontFamily: 'Arial',
         textAlign: 'center',
       }}
     >
       <h1>🎮 CoinGameDz</h1>
-      <p>React يعمل بنجاح ✅</p>
+      <h2>التطبيق يعمل ✅</h2>
+      <p>GitHub Pages يعمل بشكل صحيح.</p>
+      <p>نحن الآن نعيد تشغيل واجهة اللعبة.</p>
     </div>
   )
 }
