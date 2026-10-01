@@ -5,20 +5,13 @@ import StatsCard from '../components/home/StatsCard'
 import QuickActionButtons from '../components/home/QuickActionButtons'
 import { useEffect } from 'react'
 import { useTelegramStore } from '../store/telegramStore'
-import { useUserStore } from '../store/userStore'
 
 export default function Home() {
   const { initializeTelegram } = useTelegramStore()
-  const { loadUser } = useUserStore()
 
   useEffect(() => {
-    const initialize = async () => {
-      await initializeTelegram()
-      await loadUser()
-    }
-
-    initialize()
-  }, [initializeTelegram, loadUser])
+    initializeTelegram()
+  }, [initializeTelegram])
 
   return (
     <div className="min-h-screen bg-slate-950 text-white pb-24">
