@@ -43,6 +43,9 @@ export const useTelegramStore =
       })
 
       try {
+        /*
+         * Development / browser fallback.
+         */
         if (!inside) {
           const mockUser =
             createMockTelegramUser()
@@ -56,8 +59,11 @@ export const useTelegramStore =
           return
         }
 
-        const webApp = getTelegramWebApp()
-        const initData = webApp?.initData
+        const webApp =
+          getTelegramWebApp()
+
+        const initData =
+          webApp?.initData
 
         if (!initData) {
           throw new Error(
@@ -66,23 +72,47 @@ export const useTelegramStore =
         }
 
         /*
-         * Create an anonymous Supabase Auth session.
-         * The Edge Function will link this Auth user
-         * to the validated Telegram user.
+         * Telegram start parameter.
+         *
+         * Example:
+         * ?startapp=ref_CGD12345678
+         *
+         * Telegram puts this value inside
+         * initData as start_param.
+         *
+         * We do not trust or process the value
+         * on the client. The Edge Function
+         * validates Telegram's signed initData
+         * and processes the referral.
+         */
+        const startParam =
+          webApp?.initDataUnsafe?.start_param ??
+          null
+
+        /*
+         * Create / reuse anonymous Supabase Auth
+         * session.
+         *
+         * The Edge Function links this Auth
+         * identity with the validated Telegram user.
          */
         const {
           data: authData,
           error: authError,
-        } = await supabase.auth.getSession()
+        } =
+          await supabase.auth.getSession()
 
         if (authError) {
-          throw new Error(authError.message)
+          throw new Error(
+            authError.message,
+          )
         }
 
         if (!authData.session) {
           const {
             error: anonymousError,
-          } = await supabase.auth.signInAnonymously()
+          } =
+            await supabase.auth.signInAnonymously()
 
           if (anonymousError) {
             throw new Error(
@@ -91,20 +121,33 @@ export const useTelegramStore =
           }
         }
 
+        /*
+         * Authenticate Telegram user through
+         * the Supabase Edge Function.
+         *
+         * initData remains the trusted source.
+         * startParam is included only for logging /
+         * compatibility; the Edge Function reads the
+         * signed start_param from initData itself.
+         */
         const {
           data,
           error,
-        } = await supabase.functions.invoke(
-          'telegram-auth',
-          {
-            body: {
-              initData,
+        } =
+          await supabase.functions.invoke(
+            'telegram-auth',
+            {
+              body: {
+                initData,
+                startParam,
+              },
             },
-          },
-        )
+          )
 
         if (error) {
-          throw new Error(error.message)
+          throw new Error(
+            error.message,
+          )
         }
 
         if (
@@ -130,9 +173,11 @@ export const useTelegramStore =
         console.log(
           '[CoinGameDz] Telegram authentication successful',
           {
-            telegramId: telegramUser.id,
+            telegramId:
+              telegramUser.id,
             username:
               telegramUser.username,
+            startParam,
           },
         )
       } catch (error) {
@@ -141,6 +186,11 @@ export const useTelegramStore =
           error,
         )
 
+        /*
+         * Keep the Telegram user available in
+         * the interface even if the backend request
+         * temporarily fails.
+         */
         set({
           telegramUser:
             getTelegramUser() ?? null,
