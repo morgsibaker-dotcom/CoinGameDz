@@ -46,8 +46,7 @@ function jsonResponse(
       status,
       headers: {
         ...corsHeaders,
-        'Content-Type':
-          'application/json',
+        'Content-Type': 'application/json',
       },
     },
   )
@@ -162,9 +161,7 @@ async function validateTelegramInitData(
   const authDate =
     Number(authDateValue)
 
-  if (
-    !Number.isFinite(authDate)
-  ) {
+  if (!Number.isFinite(authDate)) {
     throw new Error(
       'Invalid Telegram auth_date',
     )
@@ -224,14 +221,44 @@ async function validateTelegramInitData(
   }
 }
 
+function normalizeReferralCode(
+  value?: string,
+): string | null {
+  if (!value) {
+    return null
+  }
+
+  const normalized =
+    value.trim()
+
+  if (!normalized) {
+    return null
+  }
+
+  /*
+   * Our referral links use:
+   * ref_<CODE>
+   *
+   * Telegram sends the whole start_param,
+   * so remove the prefix before sending
+   * the code to the database function.
+   */
+  if (
+    normalized
+      .toLowerCase()
+      .startsWith('ref_')
+  ) {
+    return normalized.substring(4)
+  }
+
+  return normalized
+}
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') {
-    return new Response(
-      'ok',
-      {
-        headers: corsHeaders,
-      },
-    )
+    return new Response('ok', {
+      headers: corsHeaders,
+    })
   }
 
   if (request.method !== 'POST') {
@@ -277,12 +304,6 @@ Deno.serve(async (request) => {
         },
       )
 
-    /*
-     * Validate the Supabase Auth session.
-     *
-     * The frontend creates an anonymous Auth session
-     * before calling this function.
-     */
     const accessToken =
       authorization.replace(
         /^Bearer\s+/i,
@@ -309,9 +330,6 @@ Deno.serve(async (request) => {
     const authUser =
       authUserData.user
 
-    /*
-     * Read request body.
-     */
     const body =
       await request.json()
 
@@ -327,9 +345,6 @@ Deno.serve(async (request) => {
       )
     }
 
-    /*
-     * Validate Telegram's signature.
-     */
     const telegramData =
       await validateTelegramInitData(
         initData,
@@ -338,9 +353,6 @@ Deno.serve(async (request) => {
     const telegramUser =
       telegramData.user!
 
-    /*
-     * Find existing CoinGameDz user.
-     */
     const {
       data: existingUser,
       error: existingUserError,
@@ -363,9 +375,7 @@ Deno.serve(async (request) => {
     let appUser = existingUser
 
     /*
-     * Existing user:
-     * connect the CoinGameDz user to the
-     * current Supabase Auth identity.
+     * Existing CoinGameDz user.
      */
     if (appUser) {
       if (
@@ -421,9 +431,6 @@ Deno.serve(async (request) => {
     } else {
       /*
        * New CoinGameDz user.
-       *
-       * Referral is processed only for a newly
-       * registered user.
        */
       const {
         data: newUser,
@@ -467,16 +474,17 @@ Deno.serve(async (request) => {
       appUser = newUser
 
       /*
-       * Process Telegram referral code.
+       * Process referral only once:
+       * during the first registration.
        */
       const referralCode =
-        telegramData.start_param
+        normalizeReferralCode(
+          telegramData.start_param,
+        )
 
-      if (
-        referralCode &&
-        typeof referralCode === 'string'
-      ) {
+      if (referralCode) {
         const {
+          data: referralResult,
           error: referralError,
         } =
           await supabaseAdmin.rpc(
@@ -494,14 +502,19 @@ Deno.serve(async (request) => {
             '[CoinGameDz] Referral processing failed',
             referralError,
           )
+        } else {
+          console.log(
+            '[CoinGameDz] Referral processed',
+            {
+              referralCode,
+              result:
+                referralResult,
+            },
+          )
         }
       }
     }
 
-    /*
-     * Return only the Telegram-facing user data.
-     * Do not expose internal database fields.
-     */
     return jsonResponse({
       success: true,
       user: {
