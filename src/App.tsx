@@ -14,6 +14,11 @@ const Profile = lazy(() => import('./pages/Profile'))
 const AdminLogin = lazy(() => import('./pages/AdminLogin'))
 const Admin = lazy(() => import('./pages/Admin'))
 const AdminSettings = lazy(() => import('./pages/AdminSettings'))
+const AdminUsers = lazy(() => import('./pages/AdminUsers'))
+const AdminWithdrawals = lazy(() => import('./pages/AdminWithdrawals'))
+const AdminTasks = lazy(() => import('./pages/AdminTasks'))
+const AdminRewards = lazy(() => import('./pages/AdminRewards'))
+const AdminWheel = lazy(() => import('./pages/AdminWheel'))
 
 const NotFoundPage = lazy(() => import('./pages/NotFound'))
 
@@ -35,6 +40,7 @@ function App() {
       <div className="min-h-screen bg-slate-950 text-white">
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
+            {/* Main App */}
             <Route path="/" element={<Home />} />
             <Route path="/earn" element={<Earn />} />
             <Route path="/rewards" element={<Rewards />} />
@@ -42,8 +48,13 @@ function App() {
             <Route path="/wallet" element={<Wallet />} />
             <Route path="/profile" element={<Profile />} />
 
-            <Route path="/admin/login" element={<AdminLogin />} />
+            {/* Admin Login */}
+            <Route
+              path="/admin/login"
+              element={<AdminLogin />}
+            />
 
+            {/* Admin Dashboard */}
             <Route
               path="/admin"
               element={
@@ -53,6 +64,57 @@ function App() {
               }
             />
 
+            {/* Admin Users */}
+            <Route
+              path="/admin/users"
+              element={
+                <AdminGuard>
+                  <AdminUsers />
+                </AdminGuard>
+              }
+            />
+
+            {/* Admin Withdrawals */}
+            <Route
+              path="/admin/withdrawals"
+              element={
+                <AdminGuard>
+                  <AdminWithdrawals />
+                </AdminGuard>
+              }
+            />
+
+            {/* Admin Tasks */}
+            <Route
+              path="/admin/tasks"
+              element={
+                <AdminGuard>
+                  <AdminTasks />
+                </AdminGuard>
+              }
+            />
+
+            {/* Admin Rewards */}
+            <Route
+              path="/admin/rewards"
+              element={
+                <AdminGuard>
+                  <AdminRewards />
+                </AdminGuard>
+              }
+            />
+
+            {/* Admin Wheel */}
+            <Route
+              path="/admin/wheel"
+              element={
+                <AdminGuard>
+                  <AdminWheel />
+                </AdminGuard>
+              }
+            />
+
+            {/* Admin Settings */}
             <Route
               path="/admin/settings"
               element={
@@ -62,7 +124,11 @@ function App() {
               }
             />
 
-            <Route path="*" element={<NotFoundPage />} />
+            {/* 404 */}
+            <Route
+              path="*"
+              element={<NotFoundPage />}
+            />
           </Routes>
         </Suspense>
       </div>
