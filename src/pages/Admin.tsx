@@ -10,10 +10,7 @@ import {
   LogOut,
   RefreshCw,
 } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import {
-  adminLogout,
-} from '../services/adminAuthService'
+import { adminLogout } from '../services/adminAuthService'
 import {
   getAdminDashboardStats,
   AdminDashboardStats,
@@ -21,7 +18,6 @@ import {
 
 export default function Admin() {
   const navigate = useNavigate()
-  const { t } = useTranslation()
 
   const [stats, setStats] =
     useState<AdminDashboardStats | null>(null)
@@ -109,11 +105,8 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-
-      {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-
           <div>
             <h1 className="text-2xl font-bold">
               CoinGameDz Admin
@@ -125,7 +118,6 @@ export default function Admin() {
           </div>
 
           <div className="flex items-center gap-2">
-
             <button
               type="button"
               onClick={loadStats}
@@ -136,9 +128,7 @@ export default function Admin() {
               <RefreshCw
                 size={19}
                 className={
-                  loading
-                    ? 'animate-spin'
-                    : ''
+                  loading ? 'animate-spin' : ''
                 }
               />
             </button>
@@ -151,23 +141,18 @@ export default function Admin() {
               <LogOut size={18} />
               Logout
             </button>
-
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8">
-
-        {/* Error */}
         {error && (
           <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-red-400">
             {error}
           </div>
         )}
 
-        {/* Statistics */}
         <section className="mb-8">
-
           <h2 className="mb-4 text-xl font-bold">
             Dashboard
           </h2>
@@ -178,7 +163,6 @@ export default function Admin() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
               <StatCard
                 title="Total Users"
                 value={stats?.users_count ?? 0}
@@ -208,18 +192,13 @@ export default function Admin() {
                 subtitle={`${stats?.pending_withdrawals_count ?? 0} pending`}
                 icon={Wallet}
               />
-
             </div>
           )}
         </section>
 
-        {/* Financial / Points Stats */}
         <section className="mb-8">
-
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-
             <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-
               <p className="text-sm text-slate-400">
                 Total User Points
               </p>
@@ -233,11 +212,9 @@ export default function Admin() {
               <p className="mt-1 text-sm text-slate-500">
                 Current points held by users
               </p>
-
             </div>
 
             <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-
               <p className="text-sm text-slate-400">
                 Withdrawals Value
               </p>
@@ -252,21 +229,16 @@ export default function Admin() {
               <p className="mt-1 text-sm text-slate-500">
                 Processing + completed withdrawals
               </p>
-
             </div>
-
           </div>
         </section>
 
-        {/* Management */}
         <section>
-
           <h2 className="mb-4 text-xl font-bold">
             Management
           </h2>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-
             {menuItems.map((item) => {
               const Icon = item.icon
 
@@ -293,11 +265,8 @@ export default function Admin() {
                 </button>
               )
             })}
-
           </div>
-
         </section>
-
       </main>
     </div>
   )
@@ -318,29 +287,11 @@ function StatCard({
 }: StatCardProps) {
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-
       <div className="flex items-start justify-between">
-
         <div>
           <p className="text-sm text-slate-400">
             {title}
           </p>
 
           <p className="mt-2 text-3xl font-bold">
-            {Number(value).toLocaleString()}
-          </p>
-
-          <p className="mt-1 text-xs text-slate-500">
-            {subtitle}
-          </p>
-        </div>
-
-        <div className="rounded-xl bg-blue-500/10 p-3 text-blue-400">
-          <Icon size={22} />
-        </div>
-
-      </div>
-
-    </div>
-  )
-}
+            {
