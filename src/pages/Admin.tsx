@@ -10,11 +10,50 @@ import {
   LogOut,
   RefreshCw,
 } from 'lucide-react'
+
 import { adminLogout } from '../services/adminAuthService'
 import {
   getAdminDashboardStats,
   AdminDashboardStats,
 } from '../services/adminDashboardService'
+
+interface StatCardProps {
+  title: string
+  value: number
+  subtitle: string
+  icon: typeof Users
+}
+
+function StatCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+}: StatCardProps) {
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm text-slate-400">
+            {title}
+          </p>
+
+          <p className="mt-2 text-3xl font-bold">
+            {Number(value).toLocaleString()}
+          </p>
+
+          <p className="mt-1 text-xs text-slate-500">
+            {subtitle}
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-blue-500/10 p-3 text-blue-400">
+          <Icon size={22} />
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function Admin() {
   const navigate = useNavigate()
@@ -22,19 +61,15 @@ export default function Admin() {
   const [stats, setStats] =
     useState<AdminDashboardStats | null>(null)
 
-  const [loading, setLoading] =
-    useState(true)
-
-  const [error, setError] =
-    useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   async function loadStats() {
     try {
       setLoading(true)
       setError('')
 
-      const data =
-        await getAdminDashboardStats()
+      const data = await getAdminDashboardStats()
 
       setStats(data)
     } catch (error) {
@@ -186,9 +221,7 @@ export default function Admin() {
 
               <StatCard
                 title="Withdrawals"
-                value={
-                  stats?.withdrawals_count ?? 0
-                }
+                value={stats?.withdrawals_count ?? 0}
                 subtitle={`${stats?.pending_withdrawals_count ?? 0} pending`}
                 icon={Wallet}
               />
@@ -246,9 +279,7 @@ export default function Admin() {
                 <button
                   key={item.path}
                   type="button"
-                  onClick={() =>
-                    navigate(item.path)
-                  }
+                  onClick={() => navigate(item.path)}
                   className="group rounded-2xl border border-slate-800 bg-slate-900 p-5 text-left transition hover:border-blue-500/50 hover:bg-slate-800"
                 >
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20">
@@ -271,27 +302,3 @@ export default function Admin() {
     </div>
   )
 }
-
-interface StatCardProps {
-  title: string
-  value: number
-  subtitle: string
-  icon: typeof Users
-}
-
-function StatCard({
-  title,
-  value,
-  subtitle,
-  icon: Icon,
-}: StatCardProps) {
-  return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-slate-400">
-            {title}
-          </p>
-
-          <p className="mt-2 text-3xl font-bold">
-            {
