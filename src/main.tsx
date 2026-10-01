@@ -7,14 +7,10 @@ import { initializeTelegramWebApp } from './services/telegramService'
 import { useTelegramStore } from './store/telegramStore'
 import { mapTelegramLanguageToApp } from './utils/languageMapper'
 import { useUserStore } from './store/userStore'
-import { initAdsGram } from './services/adService'
 
 initializeTelegramWebApp()
 
 i18n.init()
-
-// Initialize AdsGram on app start (non-blocking)
-initAdsGram()
 
 function AppWrapper() {
   useEffect(() => {
