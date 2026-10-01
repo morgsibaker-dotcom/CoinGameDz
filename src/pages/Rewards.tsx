@@ -17,21 +17,29 @@ export default function Rewards() {
   const [loading, setLoading] = useState(true)
   const [claiming, setClaiming] = useState<string | null>(null)
   const [spinning, setSpinning] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
 
   const { user, updatePoints } = useUserStore()
 
   useEffect(() => {
+    let mounted = true
+
     const loadRewards = async () => {
       if (!user) {
         setLoading(false)
         return
       }
 
+      setLoading(true)
+      setMessage(null)
+
       try {
         const [rewardData, claimedIds] = await Promise.all([
           getActiveRewards(),
           getClaimedRewardIds(user.id),
         ])
+
+        if (!mounted) return
 
         const claimedSet = new Set(claimedIds)
 
@@ -61,12 +69,22 @@ export default function Rewards() {
           '[CoinGameDz] Failed to load rewards',
           error
         )
+
+        if (mounted) {
+          setMessage('Unable to load rewards.')
+        }
       } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
 
     loadRewards()
+
+    return () => {
+      mounted = false
+    }
   }, [user])
 
   const handleClaimReward = async (reward: Reward) => {
@@ -74,9 +92,10 @@ export default function Rewards() {
       return
     }
 
-    try {
-      setClaiming(reward.id)
+    setClaiming(reward.id)
+    setMessage(null)
 
+    try {
       const newBalance = await claimReward(
         user.id,
         reward.id
@@ -95,10 +114,18 @@ export default function Rewards() {
             : item
         )
       )
+
+      setMessage('Reward claimed successfully 🎉')
     } catch (error) {
       console.error(
         '[CoinGameDz] Failed to claim reward',
         error
+      )
+
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'Unable to claim this reward.'
       )
     } finally {
       setClaiming(null)
@@ -110,13 +137,16 @@ export default function Rewards() {
       return
     }
 
-    try {
-      setSpinning(true)
+    setSpinning(true)
+    setMessage(null)
 
-      const { data, error } =
-        await supabase.rpc('spin_wheel', {
+    try {
+      const { data, error } = await supabase.rpc(
+        'spin_wheel',
+        {
           p_user_id: user.id,
-        })
+        }
+      )
 
       if (error) {
         throw new Error(error.message)
@@ -129,9 +159,13 @@ export default function Rewards() {
         new_balance: number
       }
 
+      if (!result?.success) {
+        throw new Error('Wheel spin failed.')
+      }
+
       updatePoints(Number(result.new_balance))
 
-      alert(
+      setMessage(
         result.prize_points > 0
           ? `🎉 ${result.prize_label} — +${result.prize_points} points`
           : '😄 Try again tomorrow!'
@@ -142,7 +176,7 @@ export default function Rewards() {
         error
       )
 
-      alert(
+      setMessage(
         error instanceof Error
           ? error.message
           : 'You can spin again after 24 hours.'
@@ -169,12 +203,17 @@ export default function Rewards() {
           </div>
         </Card>
 
-        {/* Wheel of Luck */}
+        {message && (
+          <Card>
+            <p className="text-sm text-slate-300">
+              {message}
+            </p>
+          </Card>
+        )}
+
         <Card gradient>
           <div className="text-center space-y-4">
-            <div className="text-6xl">
-              🎡
-            </div>
+            <div className="text-6xl">🎡</div>
 
             <div>
               <h3 className="text-xl font-bold text-white">
@@ -189,7 +228,7 @@ export default function Rewards() {
             <button
               type="button"
               onClick={handleSpinWheel}
-              disabled={spinning}
+              disabled={spinning || !user}
               className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {spinning ? 'Spinning...' : '🎡 Spin Now'}
@@ -214,7 +253,9 @@ export default function Rewards() {
             <RewardCard
               key={reward.id}
               reward={reward}
-              onClaim={() => handleClaimReward(reward)}
+              onClaim={() =>
+                handleClaimReward(reward)
+              }
             />
           ))
         )}
