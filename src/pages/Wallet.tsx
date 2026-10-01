@@ -4,7 +4,11 @@ import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import { useUserStore } from '../store/userStore'
 import { WithdrawalMethod } from '../types'
-import { Wallet as WalletIcon, CreditCard, X } from 'lucide-react'
+import {
+  Wallet as WalletIcon,
+  CreditCard,
+  X,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {
   createWithdrawalRequest,
@@ -56,7 +60,7 @@ const withdrawalMethods: WithdrawalMethod[] = [
 ]
 
 export default function Wallet() {
-  const { user, updatePoints } = useUserStore()
+  const { user, loadUser } = useUserStore()
 
   const [selectedMethod, setSelectedMethod] =
     useState<WithdrawalMethod | null>(null)
@@ -77,29 +81,30 @@ export default function Wallet() {
   const [loadingWithdrawals, setLoadingWithdrawals] =
     useState(true)
 
-  useEffect(() => {
-    const loadWithdrawals = async () => {
-      if (!user) {
-        setLoadingWithdrawals(false)
-        return
-      }
-
-      try {
-        const data = await getWithdrawalRequests(
-          user.id,
-        )
-
-        setWithdrawals(data)
-      } catch (error) {
-        console.error(
-          '[CoinGameDz] Failed to load withdrawals',
-          error,
-        )
-      } finally {
-        setLoadingWithdrawals(false)
-      }
+  const loadWithdrawals = async () => {
+    if (!user) {
+      setLoadingWithdrawals(false)
+      return
     }
 
+    try {
+      setLoadingWithdrawals(true)
+
+      const data =
+        await getWithdrawalRequests(user.id)
+
+      setWithdrawals(data)
+    } catch (error) {
+      console.error(
+        '[CoinGameDz] Failed to load withdrawals',
+        error
+      )
+    } finally {
+      setLoadingWithdrawals(false)
+    }
+  }
+
+  useEffect(() => {
     loadWithdrawals()
   }, [user])
 
@@ -108,11 +113,7 @@ export default function Wallet() {
   const selectedAmount = Number(amount)
 
   const getAccountLabel = () => {
-    if (!selectedMethod) {
-      return 'Account details'
-    }
-
-    switch (selectedMethod.id) {
+    switch (selectedMethod?.id) {
       case 'baridimob':
         return 'BaridiMob account number'
 
@@ -120,7 +121,7 @@ export default function Wallet() {
         return 'PayPal email'
 
       case 'visa':
-        return 'Visa payment details'
+        return 'Visa payout details'
 
       case 'usdt-ton':
         return 'USDT TON wallet address'
@@ -130,22 +131,39 @@ export default function Wallet() {
     }
   }
 
+  const getPlaceholder = () => {
+    switch (selectedMethod?.id) {
+      case 'baridimob':
+        return 'Enter BaridiMob account number'
+
+      case 'paypal':
+        return 'name@example.com'
+
+      case 'visa':
+        return 'Enter Visa payout details (no CVV/PIN)'
+
+      case 'usdt-ton':
+        return 'Enter TON wallet address'
+
+      default:
+        return 'Enter your details'
+    }
+  }
+
   const submitWithdrawal = async () => {
     setMessage(null)
 
     if (!selectedMethod) {
-      setMessage(
-        'Please select a withdrawal method.',
-      )
+      setMessage('Please select a withdrawal method.')
       return
     }
 
     if (
-      !Number.isFinite(selectedAmount) ||
+      !Number.isInteger(selectedAmount) ||
       selectedAmount < selectedMethod.minAmount
     ) {
       setMessage(
-        `Minimum withdrawal is ${selectedMethod.minAmount.toLocaleString()} points.`,
+        `Minimum withdrawal is ${selectedMethod.minAmount.toLocaleString()} points.`
       )
       return
     }
@@ -155,17 +173,13 @@ export default function Wallet() {
       return
     }
 
-    if (
-      selectedAmount > selectedMethod.maxAmount
-    ) {
+    if (selectedAmount > selectedMethod.maxAmount) {
       setMessage('Withdrawal amount is too high.')
       return
     }
 
     if (!accountDetails.trim()) {
-      setMessage(
-        'Please enter your account details.',
-      )
+      setMessage('Please enter your account details.')
       return
     }
 
@@ -178,30 +192,32 @@ export default function Wallet() {
         selectedMethod.id,
         {
           account: accountDetails.trim(),
-        },
+        }
       )
 
-      updatePoints(
-        user.points - selectedAmount,
-      )
+      // Refresh the real balance from Supabase.
+      // The backend handles the actual points deduction.
+      await loadUser()
 
-      const updatedWithdrawals =
-        await getWithdrawalRequests(user.id)
-
-      setWithdrawals(updatedWithdrawals)
+      await loadWithdrawals()
 
       setMessage(
-        'Withdrawal request submitted successfully.',
+        'Withdrawal request submitted successfully.'
       )
 
       setAmount('')
       setAccountDetails('')
       setSelectedMethod(null)
     } catch (error) {
+      console.error(
+        '[CoinGameDz] Failed to submit withdrawal',
+        error
+      )
+
       setMessage(
         error instanceof Error
           ? error.message
-          : 'Failed to submit withdrawal request.',
+          : 'Failed to submit withdrawal request.'
       )
     } finally {
       setSubmitting(false)
@@ -212,16 +228,12 @@ export default function Wallet() {
     switch (status) {
       case 'pending':
         return 'Pending'
-
       case 'processing':
         return 'Processing'
-
       case 'completed':
         return 'Completed'
-
       case 'rejected':
         return 'Rejected'
-
       default:
         return status
     }
@@ -231,13 +243,10 @@ export default function Wallet() {
     switch (status) {
       case 'completed':
         return 'text-green-400'
-
       case 'rejected':
         return 'text-red-400'
-
       case 'processing':
         return 'text-yellow-400'
-
       default:
         return 'text-blue-400'
     }
@@ -248,7 +257,7 @@ export default function Wallet() {
       <Header />
 
       <div className="p-4 space-y-4 max-w-lg mx-auto">
-        {/* Balance */}
+
         <Card gradient>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -281,7 +290,6 @@ export default function Wallet() {
           </div>
         </Card>
 
-        {/* Withdrawal Methods */}
         <div>
           <h3 className="text-lg font-bold text-white mb-3">
             Withdrawal Methods
@@ -302,7 +310,8 @@ export default function Wallet() {
                       </p>
 
                       <p className="text-xs text-slate-400">
-                        Minimum: {method.minAmount.toLocaleString()} pts
+                        Minimum:{' '}
+                        {method.minAmount.toLocaleString()} pts
                       </p>
                     </div>
                   </div>
@@ -310,9 +319,10 @@ export default function Wallet() {
                   <Button
                     size="sm"
                     variant="primary"
-                    onClick={() =>
+                    onClick={() => {
+                      setMessage(null)
                       setSelectedMethod(method)
-                    }
+                    }}
                   >
                     <CreditCard className="w-4 h-4" />
                   </Button>
@@ -322,7 +332,6 @@ export default function Wallet() {
           </div>
         </div>
 
-        {/* Withdrawal Form */}
         {selectedMethod && (
           <Card gradient>
             <div className="space-y-4">
@@ -333,9 +342,10 @@ export default function Wallet() {
 
                 <button
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
                     setSelectedMethod(null)
-                  }
+                    setMessage(null)
+                  }}
                   className="text-slate-400 hover:text-white"
                 >
                   <X className="w-5 h-5" />
@@ -352,7 +362,7 @@ export default function Wallet() {
                   min={selectedMethod.minAmount}
                   max={Math.min(
                     selectedMethod.maxAmount,
-                    user.points,
+                    user.points
                   )}
                   value={amount}
                   onChange={(event) =>
@@ -376,13 +386,18 @@ export default function Wallet() {
                   }
                   value={accountDetails}
                   onChange={(event) =>
-                    setAccountDetails(
-                      event.target.value,
-                    )
+                    setAccountDetails(event.target.value)
                   }
-                  placeholder="Enter your details"
+                  placeholder={getPlaceholder()}
                   className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
                 />
+
+                {selectedMethod.id === 'visa' && (
+                  <p className="text-xs text-yellow-500 mt-2">
+                    Never enter your CVV, PIN, password, or
+                    other secret security codes.
+                  </p>
+                )}
               </div>
 
               {amount && (
@@ -392,10 +407,7 @@ export default function Wallet() {
                   </p>
 
                   <p className="text-lg font-semibold text-green-400">
-                    $
-                    {(
-                      selectedAmount / 1000
-                    ).toFixed(2)}
+                    ${(selectedAmount / 1000).toFixed(2)}
                   </p>
                 </div>
               )}
@@ -420,7 +432,6 @@ export default function Wallet() {
           </Card>
         )}
 
-        {/* Withdrawal History */}
         <div>
           <h3 className="text-lg font-bold text-white mb-3">
             Withdrawal History
@@ -452,24 +463,24 @@ export default function Wallet() {
                         {withdrawal.amount_points.toLocaleString()} pts
                         {' • '}
                         ${Number(
-                          withdrawal.amount_usd,
+                          withdrawal.amount_usd
                         ).toFixed(2)}
                       </p>
 
                       <p className="text-xs text-slate-500 mt-1">
                         {new Date(
-                          withdrawal.created_at,
+                          withdrawal.created_at
                         ).toLocaleDateString()}
                       </p>
                     </div>
 
                     <span
                       className={`text-sm font-semibold ${getStatusClass(
-                        withdrawal.status,
+                        withdrawal.status
                       )}`}
                     >
                       {getStatusText(
-                        withdrawal.status,
+                        withdrawal.status
                       )}
                     </span>
                   </div>
