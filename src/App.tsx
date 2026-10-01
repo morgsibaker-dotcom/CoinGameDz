@@ -108,7 +108,7 @@ function App() {
               element={
                 <AdminGuard>
                   <AdminSettings />
-                </AdminSettings>
+                </AdminGuard>
               }
             />
 
