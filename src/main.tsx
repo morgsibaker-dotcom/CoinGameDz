@@ -7,10 +7,14 @@ import { initializeTelegramWebApp } from './services/telegramService'
 import { useTelegramStore } from './store/telegramStore'
 import { mapTelegramLanguageToApp } from './utils/languageMapper'
 import { useUserStore } from './store/userStore'
+import { initAdsGram } from './services/adService'
 
 initializeTelegramWebApp()
 
 i18n.init()
+
+// Initialize AdsGram on app start (non-blocking)
+initAdsGram()
 
 function AppWrapper() {
   useEffect(() => {
@@ -19,12 +23,15 @@ function AppWrapper() {
 
       await store.initializeTelegram()
       const { loadUser } = useUserStore.getState()
-await loadUser()
+      await loadUser()
 
       const languageCode =
         useTelegramStore.getState().telegramLanguageCode
 
-      const appLanguage = mapTelegramLanguageToApp(languageCode, 'en')
+      const appLanguage = mapTelegramLanguageToApp(
+        languageCode,
+        'en'
+      )
 
       i18n.changeLanguage(appLanguage)
 
