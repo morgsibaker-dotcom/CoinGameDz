@@ -1,303 +1,542 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods':
+    'POST, OPTIONS',
+}
+
+const TELEGRAM_BOT_TOKEN =
+  Deno.env.get('TELEGRAM_BOT_TOKEN') ?? ''
+
+const SUPABASE_URL =
+  Deno.env.get('SUPABASE_URL') ?? ''
+
+const SUPABASE_SERVICE_ROLE_KEY =
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+
+const MAX_AUTH_AGE_SECONDS = 24 * 60 * 60
+
+interface TelegramUser {
+  id: number
+  is_bot: boolean
+  first_name: string
+  last_name?: string
+  username?: string
+  language_code?: string
+  photo_url?: string
+  is_premium?: boolean
+}
+
+interface TelegramInitData {
+  user?: TelegramUser
+  auth_date?: number
+  start_param?: string
+}
+
+function jsonResponse(
+  body: Record<string, unknown>,
+  status = 200,
+) {
+  return new Response(
+    JSON.stringify(body),
+    {
+      status,
+      headers: {
+        ...corsHeaders,
+        'Content-Type':
+          'application/json',
+      },
+    },
+  )
 }
 
 async function hmacSha256(
-  key: ArrayBuffer,
+  key: ArrayBuffer | Uint8Array,
   data: string,
 ): Promise<ArrayBuffer> {
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    key,
-    {
-      name: 'HMAC',
-      hash: 'SHA-256',
-    },
-    false,
-    ['sign'],
-  )
+  const cryptoKey =
+    await crypto.subtle.importKey(
+      'raw',
+      key,
+      {
+        name: 'HMAC',
+        hash: 'SHA-256',
+      },
+      false,
+      ['sign'],
+    )
 
-  return crypto.subtle.sign(
+  return await crypto.subtle.sign(
     'HMAC',
     cryptoKey,
     new TextEncoder().encode(data),
   )
 }
 
-function toHex(buffer: ArrayBuffer): string {
-  return Array.from(new Uint8Array(buffer))
-    .map((byte) => byte.toString(16).padStart(2, '0'))
+function bytesToHex(
+  bytes: Uint8Array,
+): string {
+  return Array.from(bytes)
+    .map((byte) =>
+      byte.toString(16).padStart(2, '0'),
+    )
     .join('')
 }
 
 async function validateTelegramInitData(
   initData: string,
-  botToken: string,
-): Promise<Record<string, string>> {
-  const params = new URLSearchParams(initData)
+): Promise<TelegramInitData> {
+  if (!TELEGRAM_BOT_TOKEN) {
+    throw new Error(
+      'TELEGRAM_BOT_TOKEN is not configured',
+    )
+  }
 
-  const receivedHash = params.get('hash')
+  const params =
+    new URLSearchParams(initData)
+
+  const receivedHash =
+    params.get('hash')
 
   if (!receivedHash) {
-    throw new Error('Missing Telegram hash')
-  }
-
-  const authDate = params.get('auth_date')
-
-  if (!authDate) {
-    throw new Error('Missing Telegram auth_date')
-  }
-
-  const authTimestamp = Number(authDate)
-
-  if (!Number.isFinite(authTimestamp)) {
-    throw new Error('Invalid Telegram auth_date')
-  }
-
-  const now = Math.floor(Date.now() / 1000)
-  const maxAge = 24 * 60 * 60
-
-  if (Math.abs(now - authTimestamp) > maxAge) {
-    throw new Error('Telegram authentication data expired')
+    throw new Error(
+      'Telegram hash is missing',
+    )
   }
 
   params.delete('hash')
 
-  const dataCheckString = Array.from(params.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-    .join('\n')
+  const dataCheckString =
+    Array.from(params.entries())
+      .sort(([a], [b]) =>
+        a.localeCompare(b),
+      )
+      .map(
+        ([key, value]) =>
+          `${key}=${value}`,
+      )
+      .join('\n')
 
-  const secretKey = await crypto.subtle.digest(
-    'SHA-256',
-    new TextEncoder().encode(botToken),
-  )
+  const secretKey =
+    await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(
+        TELEGRAM_BOT_TOKEN,
+      ),
+    )
 
-  const calculatedHash = toHex(
+  const calculatedHashBuffer =
     await hmacSha256(
       secretKey,
       dataCheckString,
-    ),
-  )
+    )
 
-  if (calculatedHash !== receivedHash) {
-    throw new Error('Invalid Telegram initData')
+  const calculatedHash =
+    bytesToHex(
+      new Uint8Array(
+        calculatedHashBuffer,
+      ),
+    )
+
+  if (
+    calculatedHash.toLowerCase() !==
+    receivedHash.toLowerCase()
+  ) {
+    throw new Error(
+      'Invalid Telegram signature',
+    )
   }
 
-  return Object.fromEntries(params.entries())
-}
+  const authDateValue =
+    params.get('auth_date')
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: corsHeaders,
-    })
+  if (!authDateValue) {
+    throw new Error(
+      'Telegram auth_date is missing',
+    )
   }
 
-  try {
-    if (req.method !== 'POST') {
-      return new Response(
-        JSON.stringify({
-          error: 'Method not allowed',
-        }),
-        {
-          status: 405,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-          },
-        },
-      )
-    }
+  const authDate =
+    Number(authDateValue)
 
-    const { initData } = await req.json()
+  if (
+    !Number.isFinite(authDate)
+  ) {
+    throw new Error(
+      'Invalid Telegram auth_date',
+    )
+  }
 
-    if (!initData || typeof initData !== 'string') {
-      return new Response(
-        JSON.stringify({
-          error: 'Missing initData',
-        }),
-        {
-          status: 400,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-          },
-        },
-      )
-    }
+  const currentTime =
+    Math.floor(Date.now() / 1000)
 
-    const botToken =
-      Deno.env.get('TELEGRAM_BOT_TOKEN')
+  if (
+    currentTime - authDate >
+    MAX_AUTH_AGE_SECONDS
+  ) {
+    throw new Error(
+      'Telegram authentication data has expired',
+    )
+  }
 
-    if (!botToken) {
-      throw new Error(
-        'TELEGRAM_BOT_TOKEN secret is not configured',
-      )
-    }
+  if (authDate > currentTime + 60) {
+    throw new Error(
+      'Invalid Telegram authentication time',
+    )
+  }
 
-    const validatedData =
-      await validateTelegramInitData(
-        initData,
-        botToken,
-      )
+  const userValue =
+    params.get('user')
 
-    const userJson = validatedData.user
+  let telegramUser:
+    | TelegramUser
+    | undefined
 
-    if (!userJson) {
-      throw new Error(
-        'Telegram user data not found',
-      )
-    }
-
-    const telegramUser = JSON.parse(userJson)
-
-    if (!telegramUser.id || !telegramUser.first_name) {
+  if (userValue) {
+    try {
+      telegramUser =
+        JSON.parse(userValue)
+    } catch {
       throw new Error(
         'Invalid Telegram user data',
       )
     }
+  }
 
-    const referralCode =
-      validatedData.start_param ?? null
+  if (
+    !telegramUser ||
+    !telegramUser.id
+  ) {
+    throw new Error(
+      'Telegram user is missing',
+    )
+  }
 
-    const supabaseUrl =
-      Deno.env.get('SUPABASE_URL')
+  return {
+    user: telegramUser,
+    auth_date: authDate,
+    start_param:
+      params.get('start_param') ??
+      undefined,
+  }
+}
 
-    const serviceRoleKey =
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error(
-        'Supabase server credentials are not configured',
-      )
-    }
-
-    const existingResponse = await fetch(
-      `${supabaseUrl}/rest/v1/users?telegram_id=eq.${telegramUser.id}&select=id,telegram_id`,
+Deno.serve(async (request) => {
+  if (request.method === 'OPTIONS') {
+    return new Response(
+      'ok',
       {
-        method: 'GET',
-        headers: {
-          apikey: serviceRoleKey,
-          Authorization: `Bearer ${serviceRoleKey}`,
-        },
+        headers: corsHeaders,
       },
     )
+  }
 
-    if (!existingResponse.ok) {
-      const errorText =
-        await existingResponse.text()
-
-      throw new Error(
-        `Failed to check existing user: ${errorText}`,
-      )
-    }
-
-    const existingUsers =
-      await existingResponse.json()
-
-    const isNewUser =
-      !existingUsers?.length
-
-    const response = await fetch(
-      `${supabaseUrl}/rest/v1/users?on_conflict=telegram_id`,
+  if (request.method !== 'POST') {
+    return jsonResponse(
       {
-        method: 'POST',
-        headers: {
-          apikey: serviceRoleKey,
-          Authorization: `Bearer ${serviceRoleKey}`,
-          'Content-Type': 'application/json',
-          Prefer:
-            'resolution=merge-duplicates,return=representation',
-        },
-        body: JSON.stringify({
-          telegram_id: telegramUser.id,
-          username: telegramUser.username ?? null,
-          first_name: telegramUser.first_name,
-          last_name: telegramUser.last_name ?? null,
-          language:
-            telegramUser.language_code ?? 'en',
-          avatar_url:
-            telegramUser.photo_url ?? null,
-        }),
+        success: false,
+        error: 'Method not allowed',
       },
+      405,
     )
+  }
 
-    if (!response.ok) {
-      const errorText =
-        await response.text()
-
+  try {
+    if (
+      !SUPABASE_URL ||
+      !SUPABASE_SERVICE_ROLE_KEY
+    ) {
       throw new Error(
-        `Failed to register user: ${errorText}`,
+        'Supabase server configuration is missing',
       )
     }
 
-    const users = await response.json()
-    const user = users?.[0]
+    const authorization =
+      request.headers.get(
+        'Authorization',
+      )
 
-    if (!user) {
+    if (!authorization) {
       throw new Error(
-        'User registration returned no data',
+        'Authorization is required',
       )
     }
 
-    if (isNewUser && referralCode) {
-      const referralResponse = await fetch(
-        `${supabaseUrl}/rest/v1/rpc/process_referral_by_code`,
+    const supabaseAdmin =
+      createClient(
+        SUPABASE_URL,
+        SUPABASE_SERVICE_ROLE_KEY,
         {
-          method: 'POST',
-          headers: {
-            apikey: serviceRoleKey,
-            Authorization: `Bearer ${serviceRoleKey}`,
-            'Content-Type': 'application/json',
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
           },
-          body: JSON.stringify({
-            p_referral_code: referralCode,
-            p_referred_id: user.id,
-          }),
         },
       )
 
-      if (!referralResponse.ok) {
-        console.error(
-          '[CoinGameDz] Referral processing failed',
-          await referralResponse.text(),
+    /*
+     * Validate the Supabase Auth session.
+     *
+     * The frontend creates an anonymous Auth session
+     * before calling this function.
+     */
+    const accessToken =
+      authorization.replace(
+        /^Bearer\s+/i,
+        '',
+      )
+
+    const {
+      data: authUserData,
+      error: authUserError,
+    } =
+      await supabaseAdmin.auth.getUser(
+        accessToken,
+      )
+
+    if (
+      authUserError ||
+      !authUserData.user
+    ) {
+      throw new Error(
+        'Invalid Supabase Auth session',
+      )
+    }
+
+    const authUser =
+      authUserData.user
+
+    /*
+     * Read request body.
+     */
+    const body =
+      await request.json()
+
+    const initData =
+      body?.initData
+
+    if (
+      typeof initData !== 'string' ||
+      !initData.trim()
+    ) {
+      throw new Error(
+        'Telegram initData is required',
+      )
+    }
+
+    /*
+     * Validate Telegram's signature.
+     */
+    const telegramData =
+      await validateTelegramInitData(
+        initData,
+      )
+
+    const telegramUser =
+      telegramData.user!
+
+    /*
+     * Find existing CoinGameDz user.
+     */
+    const {
+      data: existingUser,
+      error: existingUserError,
+    } =
+      await supabaseAdmin
+        .from('users')
+        .select('*')
+        .eq(
+          'telegram_id',
+          telegramUser.id,
         )
+        .maybeSingle()
+
+    if (existingUserError) {
+      throw new Error(
+        existingUserError.message,
+      )
+    }
+
+    let appUser = existingUser
+
+    /*
+     * Existing user:
+     * connect the CoinGameDz user to the
+     * current Supabase Auth identity.
+     */
+    if (appUser) {
+      if (
+        appUser.auth_user_id &&
+        appUser.auth_user_id !==
+          authUser.id
+      ) {
+        throw new Error(
+          'This Telegram account is already linked to another session',
+        )
+      }
+
+      const {
+        data: updatedUser,
+        error: updateError,
+      } =
+        await supabaseAdmin
+          .from('users')
+          .update({
+            auth_user_id:
+              authUser.id,
+            username:
+              telegramUser.username ??
+              null,
+            first_name:
+              telegramUser.first_name,
+            last_name:
+              telegramUser.last_name ??
+              null,
+            avatar_url:
+              telegramUser.photo_url ??
+              null,
+            language:
+              telegramUser.language_code ??
+              'en',
+            updated_at:
+              new Date().toISOString(),
+          })
+          .eq(
+            'id',
+            appUser.id,
+          )
+          .select('*')
+          .single()
+
+      if (updateError) {
+        throw new Error(
+          updateError.message,
+        )
+      }
+
+      appUser = updatedUser
+    } else {
+      /*
+       * New CoinGameDz user.
+       *
+       * Referral is processed only for a newly
+       * registered user.
+       */
+      const {
+        data: newUser,
+        error: insertError,
+      } =
+        await supabaseAdmin
+          .from('users')
+          .insert({
+            auth_user_id:
+              authUser.id,
+            telegram_id:
+              telegramUser.id,
+            username:
+              telegramUser.username ??
+              null,
+            first_name:
+              telegramUser.first_name,
+            last_name:
+              telegramUser.last_name ??
+              null,
+            avatar_url:
+              telegramUser.photo_url ??
+              null,
+            language:
+              telegramUser.language_code ??
+              'en',
+            points_balance: 0,
+            usd_equivalent: 0,
+            level: 1,
+            is_active: true,
+          })
+          .select('*')
+          .single()
+
+      if (insertError) {
+        throw new Error(
+          insertError.message,
+        )
+      }
+
+      appUser = newUser
+
+      /*
+       * Process Telegram referral code.
+       */
+      const referralCode =
+        telegramData.start_param
+
+      if (
+        referralCode &&
+        typeof referralCode === 'string'
+      ) {
+        const {
+          error: referralError,
+        } =
+          await supabaseAdmin.rpc(
+            'process_referral_by_code',
+            {
+              p_referral_code:
+                referralCode,
+              p_referred_id:
+                appUser.id,
+            },
+          )
+
+        if (referralError) {
+          console.error(
+            '[CoinGameDz] Referral processing failed',
+            referralError,
+          )
+        }
       }
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        user: telegramUser,
-        databaseUser: user,
-      }),
-      {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
+    /*
+     * Return only the Telegram-facing user data.
+     * Do not expose internal database fields.
+     */
+    return jsonResponse({
+      success: true,
+      user: {
+        id: telegramUser.id,
+        is_bot:
+          telegramUser.is_bot,
+        first_name:
+          telegramUser.first_name,
+        last_name:
+          telegramUser.last_name,
+        username:
+          telegramUser.username,
+        language_code:
+          telegramUser.language_code,
+        photo_url:
+          telegramUser.photo_url,
+        is_premium:
+          telegramUser.is_premium,
       },
-    )
+    })
   } catch (error) {
-    return new Response(
-      JSON.stringify({
+    console.error(
+      '[CoinGameDz] Telegram auth error',
+      error,
+    )
+
+    return jsonResponse(
+      {
         success: false,
         error:
           error instanceof Error
             ? error.message
             : 'Authentication failed',
-      }),
-      {
-        status: 401,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
       },
+      401,
     )
   }
 })
