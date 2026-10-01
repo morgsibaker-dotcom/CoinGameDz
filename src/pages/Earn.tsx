@@ -31,7 +31,7 @@ const mockAds = [
   {
     title: 'Video Ads',
     description: 'Watch advertisement videos',
-    reward: 100,
+    reward: 2,
     watched: false,
   },
 ]
@@ -40,13 +40,23 @@ export default function Earn() {
   const [activeTab, setActiveTab] = useState('ads')
   const [tasks, setTasks] = useState<Task[]>([])
   const [loadingTasks, setLoadingTasks] = useState(true)
+  const [completingTaskId, setCompletingTaskId] =
+    useState<string | null>(null)
+  const [taskError, setTaskError] = useState<string | null>(null)
 
   const { user, updatePoints } = useUserStore()
 
   useEffect(() => {
+    let mounted = true
+
     const loadTasks = async () => {
+      setLoadingTasks(true)
+      setTaskError(null)
+
       try {
         const data = await getActiveTasks()
+
+        if (!mounted) return
 
         const mappedTasks: Task[] = data.map((task) => ({
           id: task.id,
@@ -64,23 +74,47 @@ export default function Earn() {
           '[CoinGameDz] Failed to load tasks',
           error
         )
+
+        if (mounted) {
+          setTaskError(
+            'Unable to load tasks. Please try again.'
+          )
+        }
       } finally {
-        setLoadingTasks(false)
+        if (mounted) {
+          setLoadingTasks(false)
+        }
       }
     }
 
     loadTasks()
+
+    return () => {
+      mounted = false
+    }
   }, [])
 
   const handleCompleteTask = async (task: Task) => {
     if (!user) {
+      setTaskError('User account is not available.')
       return
     }
+
+    if (task.completed) {
+      return
+    }
+
+    if (completingTaskId) {
+      return
+    }
+
+    setCompletingTaskId(task.id)
+    setTaskError(null)
 
     try {
       const newBalance = await completeTask(
         user.id,
-        task.id,
+        task.id
       )
 
       updatePoints(Number(newBalance))
@@ -88,7 +122,10 @@ export default function Earn() {
       setTasks((currentTasks) =>
         currentTasks.map((item) =>
           item.id === task.id
-            ? { ...item, completed: true }
+            ? {
+                ...item,
+                completed: true,
+              }
             : item
         )
       )
@@ -97,6 +134,15 @@ export default function Earn() {
         '[CoinGameDz] Failed to complete task',
         error
       )
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Unable to complete this task.'
+
+      setTaskError(message)
+    } finally {
+      setCompletingTaskId(null)
     }
   }
 
@@ -117,7 +163,20 @@ export default function Earn() {
           </div>
         </Card>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        {taskError && (
+          <Card>
+            <div className="space-y-2">
+              <p className="text-red-400 text-sm">
+                {taskError}
+              </p>
+            </div>
+          </Card>
+        )}
+
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+        >
           <TabsList>
             <TabsTrigger value="ads">
               Ads ({mockAds.length})
@@ -128,7 +187,10 @@ export default function Earn() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="ads" className="space-y-3 mt-4">
+          <TabsContent
+            value="ads"
+            className="space-y-3 mt-4"
+          >
             {mockAds.map((ad, idx) => (
               <AdCard
                 key={idx}
@@ -140,7 +202,10 @@ export default function Earn() {
             ))}
           </TabsContent>
 
-          <TabsContent value="tasks" className="space-y-3 mt-4">
+          <TabsContent
+            value="tasks"
+            className="space-y-3 mt-4"
+          >
             {loadingTasks ? (
               <Card>
                 <p className="text-slate-400 text-sm">
@@ -158,7 +223,9 @@ export default function Earn() {
                 <TaskCard
                   key={task.id}
                   task={task}
-                  onComplete={() => handleCompleteTask(task)}
+                  onComplete={() =>
+                    handleCompleteTask(task)
+                  }
                 />
               ))
             )}
