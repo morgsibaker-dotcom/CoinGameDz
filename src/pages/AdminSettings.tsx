@@ -18,34 +18,34 @@ interface AppConfigForm {
   minimum_withdrawal_points: string
 }
 
+const DEFAULT_CONFIG: AppConfigForm = {
+  rewarded_video_points: '2',
+  daily_login_points: '10',
+  points_per_usd: '1000',
+  referral_reward_points: '100',
+  referrals_per_reward: '10',
+  minimum_withdrawal_points: '1000',
+}
+
 export default function AdminSettings() {
   const navigate = useNavigate()
 
-  // Email & Password
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
-  // App Config
-  const [configForm, setConfigForm] = useState<AppConfigForm>({
-    rewarded_video_points: '2',
-    daily_login_points: '10',
-    points_per_usd: '1000',
-    referral_reward_points: '100',
-    referrals_per_reward: '10',
-    minimum_withdrawal_points: '1000',
-  })
+  const [configForm, setConfigForm] =
+    useState<AppConfigForm>(DEFAULT_CONFIG)
 
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [savingConfig, setSavingConfig] = useState(false)
-  const [updatingConfigKey, setUpdatingConfigKey] = useState<string | null>(null)
+  const [updatingConfigKey, setUpdatingConfigKey] =
+    useState<string | null>(null)
 
-  // Load app config on mount
   useEffect(() => {
-    loadAppConfig()
+    void loadAppConfig()
   }, [])
 
   async function loadAppConfig() {
@@ -56,19 +56,13 @@ export default function AdminSettings() {
       const configs = await getAdminAppConfig()
 
       const newForm: AppConfigForm = {
-        rewarded_video_points: '2',
-        daily_login_points: '10',
-        points_per_usd: '1000',
-        referral_reward_points: '100',
-        referrals_per_reward: '10',
-        minimum_withdrawal_points: '1000',
+        ...DEFAULT_CONFIG,
       }
 
       configs.forEach((config: AdminAppConfig) => {
         if (config.key in newForm) {
-          newForm[config.key as keyof AppConfigForm] = String(
-            config.value,
-          )
+          newForm[config.key as keyof AppConfigForm] =
+            String(config.value)
         }
       })
 
@@ -77,7 +71,7 @@ export default function AdminSettings() {
       setError(
         err instanceof Error
           ? err.message
-          : 'Failed to load app configuration',
+          : 'Failed to load app configuration.',
       )
     } finally {
       setLoading(false)
@@ -88,15 +82,18 @@ export default function AdminSettings() {
     event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault()
+
     setMessage('')
     setError('')
     setSaving(true)
 
     try {
       await updateAdminEmail(email)
+
       setMessage(
         'Email update requested. Check the new email inbox for confirmation.',
       )
+
       setEmail('')
     } catch (err) {
       setError(
@@ -113,6 +110,7 @@ export default function AdminSettings() {
     event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault()
+
     setMessage('')
     setError('')
 
@@ -130,7 +128,9 @@ export default function AdminSettings() {
 
     try {
       await updateAdminPassword(password)
+
       setMessage('Password updated successfully.')
+
       setPassword('')
       setConfirmPassword('')
     } catch (err) {
@@ -144,7 +144,7 @@ export default function AdminSettings() {
     }
   }
 
-  async function handleConfigChange(
+  function handleConfigChange(
     key: keyof AppConfigForm,
     value: string,
   ) {
@@ -154,7 +154,9 @@ export default function AdminSettings() {
     }))
   }
 
-  async function saveConfigValue(key: keyof AppConfigForm) {
+  async function saveConfigValue(
+    key: keyof AppConfigForm,
+  ) {
     try {
       setUpdatingConfigKey(key)
       setError('')
@@ -163,47 +165,60 @@ export default function AdminSettings() {
       const value = configForm[key]
       const numValue = Number(value)
 
-      if (!Number.isFinite(numValue) || numValue < 0) {
+      if (
+        !Number.isFinite(numValue) ||
+        numValue < 0
+      ) {
         throw new Error(
-          `Invalid value for ${key}: must be a positive number`,
+          `Invalid value for ${key}: must be a non-negative number.`,
         )
       }
 
       await updateAdminAppConfig(key, numValue)
+
       setMessage(`${key} updated successfully.`)
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : `Failed to update ${key}`,
+          : `Failed to update ${key}.`,
       )
     } finally {
       setUpdatingConfigKey(null)
     }
   }
 
-  const configLabels: Record<keyof AppConfigForm, string> = {
+  const configLabels: Record<
+    keyof AppConfigForm,
+    string
+  > = {
     rewarded_video_points: 'Rewarded Video Points',
     daily_login_points: 'Daily Login Points',
     points_per_usd: 'Points per USD',
-    referral_reward_points: 'Referral Reward Points',
-    referrals_per_reward: 'Referrals per Reward',
-    minimum_withdrawal_points: 'Minimum Withdrawal Points',
+    referral_reward_points:
+      'Referral Reward Points',
+    referrals_per_reward:
+      'Referrals per Reward',
+    minimum_withdrawal_points:
+      'Minimum Withdrawal Points',
   }
 
-  const configDescriptions: Record<keyof AppConfigForm, string> = {
+  const configDescriptions: Record<
+    keyof AppConfigForm,
+    string
+  > = {
     rewarded_video_points:
-      'Points awarded for watching one rewarded video',
+      'Points awarded for watching one rewarded video.',
     daily_login_points:
-      'Points awarded for daily login bonus',
+      'Points awarded for the daily login bonus.',
     points_per_usd:
-      'Number of points equal to 1 USD (exchange rate)',
+      'Number of points equal to 1 USD.',
     referral_reward_points:
-      'Points awarded per successful referral reward batch',
+      'Points awarded after reaching the referral reward threshold.',
     referrals_per_reward:
-      'Number of successful referrals needed for reward',
+      'Number of successful referrals required for one reward.',
     minimum_withdrawal_points:
-      'Minimum points required for withdrawal request',
+      'Minimum points required to request a withdrawal.',
   }
 
   return (
@@ -230,7 +245,7 @@ export default function AdminSettings() {
 
           <button
             type="button"
-            onClick={loadAppConfig}
+            onClick={() => void loadAppConfig()}
             disabled={loading}
             className="rounded-xl bg-slate-800 p-3 hover:bg-slate-700 disabled:opacity-50"
             title="Refresh config"
@@ -258,7 +273,6 @@ export default function AdminSettings() {
           </div>
         )}
 
-        {/* App Configuration Section */}
         <section className="mb-8 space-y-6">
           <div>
             <h2 className="text-2xl font-bold">
@@ -299,10 +313,10 @@ export default function AdminSettings() {
                       min="0"
                       step="1"
                       value={configForm[key]}
-                      onChange={(e) =>
+                      onChange={(event) =>
                         handleConfigChange(
                           key,
-                          e.target.value,
+                          event.target.value,
                         )
                       }
                       className="flex-1 rounded-xl bg-slate-800 px-4 py-3 outline-none"
@@ -310,10 +324,11 @@ export default function AdminSettings() {
 
                     <button
                       type="button"
-                      onClick={() => saveConfigValue(key)}
+                      onClick={() =>
+                        void saveConfigValue(key)
+                      }
                       disabled={
-                        savingConfig ||
-                        updatingConfigKey === key
+                        updatingConfigKey !== null
                       }
                       className="rounded-xl bg-blue-600 px-4 py-3 font-semibold disabled:opacity-50"
                     >
@@ -328,7 +343,6 @@ export default function AdminSettings() {
           )}
         </section>
 
-        {/* Account Settings Section */}
         <section className="space-y-6">
           <div>
             <h2 className="text-2xl font-bold">
@@ -341,7 +355,6 @@ export default function AdminSettings() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
-            {/* Change Email */}
             <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
               <h3 className="text-xl font-semibold">
                 Change Email
@@ -374,11 +387,11 @@ export default function AdminSettings() {
               </form>
 
               <p className="mt-3 text-sm text-slate-500">
-                Supabase may require confirmation from the new email address.
+                Supabase may require confirmation from
+                the new email address.
               </p>
             </section>
 
-            {/* Change Password */}
             <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
               <h3 className="text-xl font-semibold">
                 Change Password
