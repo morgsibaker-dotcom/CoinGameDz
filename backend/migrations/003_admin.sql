@@ -35,3 +35,11 @@ create table if not exists public.admin_balance_events (id uuid primary key defa
 alter table public.admin_balance_events enable row level security;
 
 create unique index if not exists withdrawal_one_pending_per_user on public.withdrawal_requests(user_id) where status='pending';
+\ncreate table if not exists public.leaderboard_cache (user_id uuid primary key references public.users(id) on delete cascade, points_balance bigint not null default 0, rank integer not null, updated_at timestamptz not null default now());
+create index if not exists leaderboard_rank_idx on public.leaderboard_cache(rank);
+create or replace function public.get_top_users(p_limit integer default 100)
+returns table(rank bigint,user_id uuid,display_name text,points_balance bigint,level integer,referral_count integer)
+language sql security definer set search_path=public as $$
+ select row_number() over(order by u.points_balance desc,u.created_at asc) as rank,u.id,coalesce(nullif(u.username,''),nullif(u.first_name,''),'Player') as display_name,coalesce(u.points_balance,0),coalesce(u.level,1),coalesce(u.referral_count,0)
+ from public.users u where u.is_active=true order by u.points_balance desc,u.created_at asc limit greatest(1,least(coalesce(p_limit,100),100));
+$$;
