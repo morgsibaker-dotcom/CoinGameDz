@@ -32,3 +32,8 @@ create index if not exists ad_events_user_idx on public.ad_events(user_id,create
 
 alter table public.withdrawal_requests enable row level security;
 alter table public.ad_events enable row level security;
+
+
+alter table public.referrals add column if not exists reward_points bigint not null default 0;
+alter table public.referrals add column if not exists rewarded_at timestamptz;
+create unique index if not exists referrals_referred_user_unique on public.referrals(referred_id);
