@@ -27,3 +27,6 @@ create policy "admins can read own admin record" on public.admin_users for selec
 create policy "admins can read settings" on public.app_settings for select using (
   exists(select 1 from public.admin_users a where a.auth_user_id=auth.uid())
 );
+
+create table if not exists public.admin_balance_events (id uuid primary key default gen_random_uuid(), user_id uuid not null references public.users(id) on delete cascade, admin_auth_user_id uuid not null, amount_points bigint not null, reason text not null, created_at timestamptz not null default now());
+alter table public.admin_balance_events enable row level security;
