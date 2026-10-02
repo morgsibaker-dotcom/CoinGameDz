@@ -10,6 +10,7 @@ import NotFound from './pages/NotFound'
 import Admin from './pages/Admin'
 import AdminUsers from './pages/AdminUsers'
 import AdminTasks from './pages/AdminTasks'
+import AdminWithdrawals from './pages/AdminWithdrawals'
 import { initializeTelegramWebApp } from './services/telegramService'
 import { useTelegramStore } from './store/telegramStore'
 import { useUserStore } from './store/userStore'
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="/admin/tasks" element={<AdminTasks />} />
+        <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
