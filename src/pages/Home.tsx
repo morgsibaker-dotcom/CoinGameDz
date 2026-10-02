@@ -11,8 +11,15 @@ export default function Home() {
     >
       <Header />
 
-      <div style={{ padding: '30px', textAlign: 'center' }}>
+      <div
+        style={{
+          padding: '30px',
+          textAlign: 'center',
+        }}
+      >
+        <h1>🎮 CoinGameDz</h1>
         <h2>Home + Header TEST ✅</h2>
+        <p>اختبار الواجهة</p>
       </div>
     </div>
   )
