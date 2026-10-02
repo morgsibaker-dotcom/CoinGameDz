@@ -1,14 +1,18 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Home from './pages/Home'
-
-function App() {
+export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-      </Routes>
-    </Router>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#0f172a',
+        color: 'white',
+        padding: '40px 20px',
+        textAlign: 'center',
+        fontFamily: 'Arial',
+      }}
+    >
+      <h1>🎮 CoinGameDz</h1>
+      <h2>التطبيق يعمل ✅</h2>
+      <p>اختبار الشاشة</p>
+    </div>
   )
 }
-
-export default App
