@@ -17,7 +17,10 @@ insert into public.app_settings(key,value) values
 ('points_per_usd','{"value":1000}'),
 ('tap_limit_per_minute','{"value":60}'),
 ('daily_ad_limit','{"value":10}'),
-('ad_reward_points','{"value":100}')
+('ad_reward_points','{"value":100}'),
+('ad_provider','{"value":"AdsGram"}'),
+('ad_platform_url','{"value":""}'),
+('ad_placement','{"value":""}')
 on conflict(key) do nothing;
 
 alter table public.admin_users enable row level security;
