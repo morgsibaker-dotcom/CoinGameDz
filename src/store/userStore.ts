@@ -1,11 +1,10 @@
 import { create } from 'zustand'
-import type { User } from '../types'
 
 interface UserStore {
-  user: User | null
+  user: any | null
   isLoading: boolean
   loadUser: () => Promise<void>
-  setUser: (user: User) => void
+  setUser: (user: any) => void
   updatePoints: (points: number) => void
   updateLevel: (level: number) => void
 }
@@ -41,7 +40,7 @@ export const useUserStore = create<UserStore>((set) => ({
       const points =
         Number(dbUser.points_balance ?? 0)
 
-      const user: User = {
+      const user = {
         id: String(dbUser.id),
 
         username:
