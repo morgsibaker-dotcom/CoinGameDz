@@ -23,7 +23,7 @@ export default function Earn(){
     const result=await controller.show()
     if(result?.done===false)return
     const eventId=crypto.randomUUID()
-    await awardPoints('ad',{provider_event_id:eventId,provider:'AdsGram'})
+    await awardPoints('ad' as any,{provider_event_id:eventId,provider:'AdsGram'})
     setClaimed(v=>[...v,id])
    }catch{}finally{setBusy(null)}
    return
