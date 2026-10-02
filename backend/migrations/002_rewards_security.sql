@@ -41,7 +41,7 @@ create unique index if not exists referrals_referred_user_unique on public.refer
 
 create or replace function public.process_referral_by_code(p_referral_code text, p_referred_id uuid)
 returns jsonb language plpgsql security definer set search_path = public as $$
-declare v_referrer public.users%rowtype; v_reward bigint := 500;
+declare v_referrer public.users%rowtype; v_reward bigint := 50;
 begin
   if exists(select 1 from public.referrals where referred_user_id=p_referred_id) then return jsonb_build_object('success',false,'reason','already_referred'); end if;
   select * into v_referrer from public.users where referral_code=p_referral_code limit 1;
