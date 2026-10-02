@@ -16,7 +16,7 @@ export const supportedLanguages = [
   { code: 'fr', name: 'Français', dir: 'ltr' },
 ] as const
 
-type LanguageCode = (typeof supportedLanguages)[number]['code']
+export type LanguageCode = (typeof supportedLanguages)[number]['code']
 
 const isLanguageCode = (value: string | null): value is LanguageCode =>
   value === 'ar' || value === 'en' || value === 'fr'
@@ -43,7 +43,7 @@ export function applyLanguage(language: LanguageCode) {
   }
 }
 
-i18n
+void i18n
   .use(initReactI18next)
   .init({
     resources,
@@ -53,6 +53,7 @@ i18n
       escapeValue: false,
     },
   })
-  .then(() => applyLanguage(initialLanguage))
+
+applyLanguage(initialLanguage)
 
 export default i18n
