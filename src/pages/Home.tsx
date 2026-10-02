@@ -1,116 +1,99 @@
-import { create } from 'zustand'
-import { User } from '../types'
-import { getUserByTelegramId } from '../services/userService'
-import { useTelegramStore } from './telegramStore'
+import Header from '../components/common/Header'
+import BottomNavigation from '../components/common/BottomNavigation'
+import { useEffect, useState } from 'react'
+import { useTelegramStore } from '../store/telegramStore'
+import { useUserStore } from '../store/userStore'
+import { supabase } from '../lib/supabase'
+import BalanceCard from '../components/home/BalanceCard'
+import StatsCard from '../components/home/StatsCard'
+import QuickActionButtons from '../components/home/QuickActionButtons'
 
-interface UserStore {
-  user: User | null
-  isLoading: boolean
-  loadUser: () => Promise<void>
-  setUser: (user: User) => void
-  updatePoints: (points: number) => void
-  updateLevel: (level: number) => void
-}
+export default function Home() {
+  const { initializeTelegram } = useTelegramStore()
+  const { user, loadUser } = useUserStore()
 
-export const useUserStore = create<UserStore>((set) => ({
-  user: null,
-  isLoading: false,
+  const [dailyMessage, setDailyMessage] = useState('')
+  const [dailyLoading, setDailyLoading] = useState(false)
 
-  loadUser: async () => {
-    set({ isLoading: true })
-
-    try {
-      const telegramUser =
-        useTelegramStore.getState().telegramUser
-
-      if (!telegramUser) {
-        return
-      }
-
-      const dbUser =
-        await getUserByTelegramId(telegramUser.id)
-
-      if (!dbUser) {
-        return
-      }
-
-      const points =
-        Number(dbUser.points_balance ?? 0)
-
-      const user: User = {
-        id: String(dbUser.id),
-
-        username:
-          dbUser.username ??
-          dbUser.first_name ??
-          '',
-
-        avatar:
-          dbUser.avatar_url ?? '',
-
-        points,
-
-        level:
-          Number(dbUser.level ?? 1),
-
-        usdEquivalent:
-          Number(
-            dbUser.usd_equivalent ??
-            points / 1000
-          ),
-
-        joinDate:
-          new Date(dbUser.created_at),
-
-        referralCode:
-          dbUser.referral_code ?? '',
-
-        referralCount:
-          Number(dbUser.referral_count ?? 0),
-
-        referralEarnings:
-          Math.floor(
-            Number(dbUser.referral_count ?? 0) / 10
-          ) * 100,
-      }
-
-      set({ user })
-    } catch (error) {
-      console.error(
-        '[CoinGameDz] Failed to load user',
-        error
-      )
-    } finally {
-      set({ isLoading: false })
+  useEffect(() => {
+    const initialize = async () => {
+      await initializeTelegram()
     }
-  },
 
-  setUser: (user) =>
-    set({ user }),
+    initialize()
+  }, [initializeTelegram])
 
-  updatePoints: (points) =>
-    set((state) => {
-      if (!state.user) return state
+  useEffect(() => {
+    const claimDailyLogin = async () => {
+      if (!user?.id || dailyLoading) return
 
-      return {
-        user: {
-          ...state.user,
-          points,
-          usdEquivalent:
-            points / 1000,
-        },
+      setDailyLoading(true)
+
+      try {
+        const { data, error } = await supabase.rpc(
+          'claim_daily_login',
+          {
+            p_user_id: user.id,
+          },
+        )
+
+        if (error) {
+          console.error(
+            '[CoinGameDz] Daily login error:',
+            error,
+          )
+          return
+        }
+
+        if (data?.success) {
+          setDailyMessage(
+            `+${data.points_awarded} points • Streak: ${data.streak_days} day${
+              data.streak_days === 1 ? '' : 's'
+            }`,
+          )
+
+          await loadUser()
+        } else if (data?.already_claimed) {
+          setDailyMessage('')
+        }
+      } catch (error) {
+        console.error(
+          '[CoinGameDz] Daily login failed:',
+          error,
+        )
+      } finally {
+        setDailyLoading(false)
       }
-    }),
+    }
 
-  updateLevel: (level) =>
-    set((state) => {
-      if (!state.user) return state
+    claimDailyLogin()
+  }, [user?.id, loadUser, dailyLoading])
 
-      return {
-        user: {
-          ...state.user,
-          level,
-        },
-      }
-    }),
-}))
+  return (
+    <div className="min-h-screen bg-slate-950 pb-24">
+      <Header />
+
+      <div className="p-4 space-y-4 max-w-lg mx-auto">
+        {dailyMessage && (
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-center">
+            <p className="text-sm font-semibold text-emerald-400">
+              Daily Login
+            </p>
+
+            <p className="mt-1 text-xs text-emerald-300">
+              {dailyMessage}
+            </p>
+          </div>
+        )}
+
+        <BalanceCard />
+
+        <StatsCard />
+
+        <QuickActionButtons />
+      </div>
+
+      <BottomNavigation />
+    </div>
+  )
+}
