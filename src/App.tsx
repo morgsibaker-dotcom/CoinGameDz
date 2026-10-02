@@ -8,6 +8,7 @@ import Wallet from './pages/Wallet'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 import Admin from './pages/Admin'
+import AdminUsers from './pages/AdminUsers'
 import { initializeTelegramWebApp } from './services/telegramService'
 import { useTelegramStore } from './store/telegramStore'
 import { useUserStore } from './store/userStore'
@@ -34,5 +35,6 @@ export default function App() {
   if (!ready) return <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center"><p className="text-sm text-slate-400">Loading DzCoinEren…</p></div>
 
   return <BrowserRouter><Routes><Route path="/" element={<Home />} /><Route path="/earn" element={<Earn />} /><Route path="/rewards" element={<Rewards />} /><Route path="/referrals" element={<Referrals />} /><Route path="/wallet" element={<Wallet />} /><Route path="/profile" element={<Profile />} /><Route path="/admin" element={<Admin />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="*" element={<NotFound />} /></Routes></BrowserRouter>
 }
