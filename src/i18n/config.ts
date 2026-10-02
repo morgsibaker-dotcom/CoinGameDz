@@ -16,17 +16,21 @@ export const supportedLanguages = [
   { code: 'fr', name: 'Français', dir: 'ltr' },
 ] as const
 
+type LanguageCode = (typeof supportedLanguages)[number]['code']
+
+const isLanguageCode = (value: string | null): value is LanguageCode =>
+  value === 'ar' || value === 'en' || value === 'fr'
+
 const savedLanguage =
   typeof window !== 'undefined'
     ? window.localStorage.getItem('dze_language')
     : null
 
-const initialLanguage =
-  savedLanguage && ['ar', 'en', 'fr'].includes(savedLanguage)
-    ? savedLanguage
-    : 'ar'
+const initialLanguage: LanguageCode = isLanguageCode(savedLanguage)
+  ? savedLanguage
+  : 'ar'
 
-export function applyLanguage(language: 'ar' | 'en' | 'fr') {
+export function applyLanguage(language: LanguageCode) {
   void i18n.changeLanguage(language)
 
   if (typeof document !== 'undefined') {
