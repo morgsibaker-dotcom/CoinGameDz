@@ -55,6 +55,10 @@ function StatCard({
   )
 }
 
+import { supabase } from '../lib/supabase'
+
+
+function AdSettings(){const [provider,setProvider]=useState('');const [url,setUrl]=useState('');const [placement,setPlacement]=useState('');const [saved,setSaved]=useState(false);useEffect(()=>{supabase.from('app_settings').select('key,value').in('key',['ad_provider','ad_platform_url','ad_placement']).then(({data})=>{for(const x of data||[]){const v=(x.value as any)?.value??'';if(x.key==='ad_provider')setProvider(String(v));if(x.key==='ad_platform_url')setUrl(String(v));if(x.key==='ad_placement')setPlacement(String(v))}})},[]);const save=async()=>{setSaved(false);for(const [key,value] of [['ad_provider',provider],['ad_platform_url',url],['ad_placement',placement]])await supabase.from('app_settings').upsert({key,value:{value},updated_at:new Date().toISOString()});setSaved(true)};return <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900 p-5"><h2 className="text-lg font-bold">إعدادات الإعلانات</h2><div className="mt-4 space-y-3"><input value={provider} onChange={e=>setProvider(e.target.value)} placeholder="اسم منصة الإعلانات" className="w-full rounded-xl bg-slate-800 p-3"/><input value={url} onChange={e=>setUrl(e.target.value)} placeholder="رابط منصة الإعلانات" className="w-full rounded-xl bg-slate-800 p-3"/><input value={placement} onChange={e=>setPlacement(e.target.value)} placeholder="Ad Unit / Placement ID" className="w-full rounded-xl bg-slate-800 p-3"/><button onClick={save} className="w-full rounded-xl bg-sky-500 p-3 font-bold text-slate-950">حفظ إعدادات الإعلانات</button>{saved&&<p className="text-sm text-emerald-400">تم الحفظ ✓</p>}</div></section>}
 export default function Admin() {
   const navigate = useNavigate()
 
