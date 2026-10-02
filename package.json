@@ -1,8 +1,8 @@
 {
-  "name": "coingamedz",
+  "name": "dzcoineren",
   "version": "0.1.0",
   "type": "module",
-  "description": "Professional Telegram Mini App rewards platform",
+  "description": "DzCoinEren — professional Telegram Mini App rewards platform",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
