@@ -1,29 +1,116 @@
-import Header from '../components/common/Header'
-import BottomNavigation from '../components/common/BottomNavigation'
-import BalanceCard from '../components/home/BalanceCard'
-import StatsCard from '../components/home/StatsCard'
-import QuickActionButtons from '../components/home/QuickActionButtons'
-import { useEffect } from 'react'
-import { useTelegramStore } from '../store/telegramStore'
+import { create } from 'zustand'
+import { User } from '../types'
+import { getUserByTelegramId } from '../services/userService'
+import { useTelegramStore } from './telegramStore'
 
-export default function Home() {
-  const { initializeTelegram } = useTelegramStore()
-
-  useEffect(() => {
-    initializeTelegram()
-  }, [initializeTelegram])
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-white pb-24">
-      <Header />
-
-      <div className="p-4 space-y-4 max-w-lg mx-auto">
-        <BalanceCard />
-        <StatsCard />
-        <QuickActionButtons />
-      </div>
-
-      <BottomNavigation />
-    </div>
-  )
+interface UserStore {
+  user: User | null
+  isLoading: boolean
+  loadUser: () => Promise<void>
+  setUser: (user: User) => void
+  updatePoints: (points: number) => void
+  updateLevel: (level: number) => void
 }
+
+export const useUserStore = create<UserStore>((set) => ({
+  user: null,
+  isLoading: false,
+
+  loadUser: async () => {
+    set({ isLoading: true })
+
+    try {
+      const telegramUser =
+        useTelegramStore.getState().telegramUser
+
+      if (!telegramUser) {
+        return
+      }
+
+      const dbUser =
+        await getUserByTelegramId(telegramUser.id)
+
+      if (!dbUser) {
+        return
+      }
+
+      const points =
+        Number(dbUser.points_balance ?? 0)
+
+      const user: User = {
+        id: String(dbUser.id),
+
+        username:
+          dbUser.username ??
+          dbUser.first_name ??
+          '',
+
+        avatar:
+          dbUser.avatar_url ?? '',
+
+        points,
+
+        level:
+          Number(dbUser.level ?? 1),
+
+        usdEquivalent:
+          Number(
+            dbUser.usd_equivalent ??
+            points / 1000
+          ),
+
+        joinDate:
+          new Date(dbUser.created_at),
+
+        referralCode:
+          dbUser.referral_code ?? '',
+
+        referralCount:
+          Number(dbUser.referral_count ?? 0),
+
+        referralEarnings:
+          Math.floor(
+            Number(dbUser.referral_count ?? 0) / 10
+          ) * 100,
+      }
+
+      set({ user })
+    } catch (error) {
+      console.error(
+        '[CoinGameDz] Failed to load user',
+        error
+      )
+    } finally {
+      set({ isLoading: false })
+    }
+  },
+
+  setUser: (user) =>
+    set({ user }),
+
+  updatePoints: (points) =>
+    set((state) => {
+      if (!state.user) return state
+
+      return {
+        user: {
+          ...state.user,
+          points,
+          usdEquivalent:
+            points / 1000,
+        },
+      }
+    }),
+
+  updateLevel: (level) =>
+    set((state) => {
+      if (!state.user) return state
+
+      return {
+        user: {
+          ...state.user,
+          level,
+        },
+      }
+    }),
+}))
