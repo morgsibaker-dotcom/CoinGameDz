@@ -43,3 +43,6 @@ language sql security definer set search_path=public as $$
  select row_number() over(order by u.points_balance desc,u.created_at asc) as rank,u.id,coalesce(nullif(u.username,''),nullif(u.first_name,''),'Player') as display_name,coalesce(u.points_balance,0),coalesce(u.level,1),coalesce(u.referral_count,0)
  from public.users u where u.is_active=true order by u.points_balance desc,u.created_at asc limit greatest(1,least(coalesce(p_limit,100),100));
 $$;
+
+-- daily bonus security
+create unique index if not exists point_transactions_daily_checkin_unique on public.point_transactions(user_id, source, ((created_at at time zone 'UTC')::date)) where source='daily_checkin';
