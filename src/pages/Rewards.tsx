@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Gift, Check, Trophy } from 'lucide-react'
+import { Check, Gift, Trophy } from 'lucide-react'
 import Header from '../components/common/Header'
 import BottomNavigation from '../components/common/BottomNavigation'
 import { awardPoints } from '../services/earnService'
@@ -20,21 +20,37 @@ export default function Rewards() {
 
   const claim = async () => {
     if (claimed || busy) return
+
     setBusy(true)
+
     try {
       await awardPoints('daily_checkin')
       setClaimed(true)
     } catch {
-      // Keep the button available if the server rejects the claim.
+      setClaimed(false)
     } finally {
       setBusy(false)
     }
   }
 
   useEffect(() => {
-    supabase
-      .rpc('get_top_users', { p_limit: 100 })
-      .then(({ data }) => setLeaders((data ?? []) as Leader[]))
+    let mounted = true
+
+    const loadLeaderboard = async () => {
+      const { data } = await supabase.rpc('get_top_users', {
+        p_limit: 100,
+      })
+
+      if (mounted) {
+        setLeaders((data ?? []) as Leader[])
+      }
+    }
+
+    void loadLeaderboard()
+
+    return () => {
+      mounted = false
+    }
   }, [])
 
   return (
@@ -42,11 +58,20 @@ export default function Rewards() {
       <Header />
 
       <section className="px-4 pt-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-sky-400">Rewards</p>
-        <h1 className="mt-2 text-3xl font-black">Daily Reward</h1>
-        <p className="mt-2 text-sm text-slate-400">Claim once per day.</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-sky-400">
+          Rewards
+        </p>
+
+        <h1 className="mt-2 text-3xl font-black">
+          Daily Reward
+        </h1>
+
+        <p className="mt-2 text-sm text-slate-400">
+          Claim once per day.
+        </p>
 
         <button
+          type="button"
           onClick={claim}
           disabled={claimed || busy}
           className="mt-6 flex w-full items-center justify-between rounded-2xl border border-white/10 bg-slate-900 p-5 disabled:opacity-60"
@@ -55,7 +80,9 @@ export default function Rewards() {
             <Gift className="text-sky-400" />
             <span>
               <b>Daily check-in</b>
-              <small className="block text-slate-500 mt-1">+50 DZE</small>
+              <small className="mt-1 block text-slate-500">
+                +50 DZE
+              </small>
             </span>
           </span>
 
@@ -63,7 +90,7 @@ export default function Rewards() {
             <Check className="text-emerald-400" />
           ) : (
             <span className="font-bold text-sky-400">
-              {busy ? 'Saving…' : 'Claim'}
+              {busy ? 'Saving...' : 'Claim'}
             </span>
           )}
         </button>
@@ -75,19 +102,22 @@ export default function Rewards() {
           </div>
 
           <div className="space-y-2">
-            {leaders.map((u) => (
+            {leaders.map((user) => (
               <div
-                key={u.user_id}
+                key={user.user_id}
                 className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-900 p-3"
               >
                 <span>
                   <b>
-                    #{u.rank} {u.display_name}
+                    #{user.rank} {user.display_name}
                   </b>
-                  <small className="ml-2 text-slate-500">Lv.{u.level}</small>
+                  <small className="ml-2 text-slate-500">
+                    Lv.{user.level}
+                  </small>
                 </span>
+
                 <strong className="text-sky-400">
-                  {Number(u.points_balance).toLocaleString()} DZE
+                  {Number(user.points_balance).toLocaleString()} DZE
                 </strong>
               </div>
             ))}
