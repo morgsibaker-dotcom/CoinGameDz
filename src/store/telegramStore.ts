@@ -15,6 +15,7 @@ interface TelegramUser {
   username?: string
   language_code?: string
   photo_url?: string
+  is_premium?: boolean
 }
 
 const createMockTelegramUser = (): TelegramUser => ({
@@ -26,6 +27,7 @@ const createMockTelegramUser = (): TelegramUser => ({
   language_code: 'en',
   photo_url:
     'https://api.dicebear.com/7.x/avataaars/svg?seed=user123',
+  is_premium: false,
 })
 
 interface TelegramStore {
@@ -150,28 +152,4 @@ export const useTelegramStore =
           '[CoinGameDz] Telegram authentication successful',
           {
             telegramId:
-              telegramUser.id,
-            username:
-              telegramUser.username,
-            startParam,
-          },
-        )
-      } catch (error) {
-        console.error(
-          '[CoinGameDz] Telegram authentication failed',
-          error,
-        )
-
-        set({
-          telegramUser:
-            getTelegramUser() as TelegramUser | null,
-          telegramLanguageCode:
-            getTelegramLanguageCode(),
-        })
-      } finally {
-        set({
-          isRegistering: false,
-        })
-      }
-    },
-  }))
+             
