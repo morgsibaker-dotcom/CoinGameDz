@@ -189,3 +189,17 @@ revoke all on function public.admin_set_withdrawal_status(uuid,uuid,text,text) f
 revoke all on function public.admin_adjust_balance(uuid,uuid,bigint,text) from public,anon,authenticated;
 revoke all on function public.admin_save_ad_settings(uuid,text,text,text) from public,anon,authenticated;
 grant execute on function public.get_public_ad_config() to anon,authenticated;
+
+create or replace function public.get_public_withdrawal_config()
+returns jsonb
+language sql
+security definer
+set search_path=public
+as $$
+  select jsonb_build_object(
+    'minimum_points',coalesce((select (value->>'value')::numeric from public.app_settings where key='withdrawal_min_points'),10000),
+    'points_per_usd',coalesce((select (value->>'value')::numeric from public.app_settings where key='points_per_usd'),1000)
+  );
+$$;
+revoke all on function public.get_public_withdrawal_config() from public;
+grant execute on function public.get_public_withdrawal_config() to anon,authenticated;
