@@ -1,7 +1,5 @@
 import { create } from 'zustand'
-import { User } from '../types'
-import { getUserByTelegramId } from '../services/userService'
-import { useTelegramStore } from './telegramStore'
+import type { User } from '../types'
 
 interface UserStore {
   user: User | null
@@ -20,6 +18,12 @@ export const useUserStore = create<UserStore>((set) => ({
     set({ isLoading: true })
 
     try {
+      const { useTelegramStore } =
+        await import('./telegramStore')
+
+      const { getUserByTelegramId } =
+        await import('../services/userService')
+
       const telegramUser =
         useTelegramStore.getState().telegramUser
 
@@ -77,7 +81,7 @@ export const useUserStore = create<UserStore>((set) => ({
       set({ user })
     } catch (error) {
       console.error(
-        '[CoinGameDz] Failed to load user',
+        '[CoinGameDz] Failed to load user:',
         error
       )
     } finally {
@@ -85,10 +89,11 @@ export const useUserStore = create<UserStore>((set) => ({
     }
   },
 
-  setUser: (user) =>
-    set({ user }),
+  setUser: (user) => {
+    set({ user })
+  },
 
-  updatePoints: (points) =>
+  updatePoints: (points) => {
     set((state) => {
       if (!state.user) return state
 
@@ -96,13 +101,13 @@ export const useUserStore = create<UserStore>((set) => ({
         user: {
           ...state.user,
           points,
-          usdEquivalent:
-            points / 1000,
+          usdEquivalent: points / 1000,
         },
       }
-    }),
+    })
+  },
 
-  updateLevel: (level) =>
+  updateLevel: (level) => {
     set((state) => {
       if (!state.user) return state
 
@@ -112,5 +117,6 @@ export const useUserStore = create<UserStore>((set) => ({
           level,
         },
       }
-    }),
+    })
+  },
 }))
