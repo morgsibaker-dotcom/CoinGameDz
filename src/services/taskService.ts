@@ -1,15 +1,33 @@
 import { supabase } from '../lib/supabase'
 
-export async function getActiveTasks() {
-  const { data, error } = await supabase
-    .from('tasks')
-    .select('*')
-    .eq('is_active', true)
-    .order('created_at', { ascending: true })
+export type TaskCategory = 'watch' | 'click' | 'survey' | 'game'
 
-  if (error) {
-    throw new Error(error.message)
+export interface Task {
+  id: string
+  title: string
+  description: string
+  category: TaskCategory
+  reward_points: number
+  max_completions_per_user: number | null
+  completed: boolean
+}
+
+export async function getActiveTasks(): Promise<Task[]> {
+  const { data, error } = await supabase.rpc('get_active_tasks')
+  if (error) throw new Error(error.message)
+  return (data ?? []) as Task[]
+}
+
+export async function completeTask(taskId: string) {
+  const { data, error } = await supabase.rpc('complete_task', {
+    p_task_id: taskId,
+  })
+
+  if (error) throw new Error(error.message)
+  if (!data?.success) throw new Error(data?.error ?? 'Task completion failed')
+
+  return {
+    pointsAwarded: Number(data.points_awarded ?? 0),
+    pointsBalance: Number(data.points_balance ?? 0),
   }
-
-  return data ?? []
 }
