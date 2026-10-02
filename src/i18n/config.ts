@@ -34,16 +34,18 @@ const savedLanguage =
 const initialLanguage: LanguageCode =
   isLanguageCode(savedLanguage) ? savedLanguage : 'ar'
 
-export function applyLanguage(language: LanguageCode) {
-  void i18n.changeLanguage(language)
+export function applyLanguage(language: string) {
+  const code: LanguageCode = isLanguageCode(language) ? language : 'ar'
+
+  void i18n.changeLanguage(code)
 
   if (typeof document !== 'undefined') {
-    document.documentElement.lang = language
-    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr'
+    document.documentElement.lang = code
+    document.documentElement.dir = code === 'ar' ? 'rtl' : 'ltr'
   }
 
   if (typeof window !== 'undefined') {
-    window.localStorage.setItem('dze_language', language)
+    window.localStorage.setItem('dze_language', code)
   }
 }
 
