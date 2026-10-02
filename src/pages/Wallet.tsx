@@ -16,15 +16,12 @@ export default function Wallet() {
   const balance = Number(user?.points_balance ?? 0)
 
   useEffect(() => {
-    supabase
-      .from('app_settings')
-      .select('value')
-      .eq('key', 'withdrawal_min_points')
-      .maybeSingle()
-      .then(({ data }) => {
-        const value = Number((data?.value as { value?: number } | null)?.value)
-        if (Number.isFinite(value) && value > 0) setMinimum(value)
-      })
+    supabase.rpc('get_public_withdrawal_config').then(({ data }) => {
+      const value = Number(
+        (data as { minimum_points?: number } | null)?.minimum_points,
+      )
+      if (Number.isFinite(value) && value > 0) setMinimum(value)
+    })
   }, [])
 
   const request = async () => {
