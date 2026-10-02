@@ -144,7 +144,7 @@ export default function Admin() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
           <div>
             <h1 className="text-2xl font-bold">
-              CoinGameDz Admin
+              DzCoinEren Admin
             </h1>
 
             <p className="text-sm text-slate-400">
