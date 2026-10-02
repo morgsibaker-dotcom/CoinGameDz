@@ -1,4 +1,49 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS'}
-const json=(body:Record<string,unknown>,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,'Content-Type':'application/json'}})
-Deno.serve(async(req)=>{if(req.method==='OPTIONS')return new Response('ok',{headers:cors});try{const url=Deno.env.get('SUPABASE_URL')??'',key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')??'',token=req.headers.get('Authorization')?.replace(/^Bearer\s+/i,'');if(!url||!key||!token)throw new Error('Unauthorized');const admin=createClient(url,key,{auth:{autoRefreshToken:false,persistSession:false}});const {data:auth}=await admin.auth.getUser(token);if(!auth.user)throw new Error('Unauthorized');const {data:user}=await admin.from('users').select('id,points_balance').eq('auth_user_id',auth.user.id).maybeSingle();if(!user)throw new Error('User not found');const body=await req.json();const method=String(body?.method||''),destination=String(body?.destination||'').trim();if(!['BaridiMob','USDT TON'].includes(method))throw new Error('Invalid withdrawal method');if(!destination)throw new Error('Destination is required');const {data:s}=await admin.from('app_settings').select('value').eq('key','withdrawal_min_points').maybeSingle();const min=Number((s?.value as any)?.value??10000);const points=Number(user.points_balance??0);if(points<min)throw new Error('Minimum withdrawal not reached');const {data:pending}=await admin.from('withdrawal_requests').select('id').eq('user_id',user.id).eq('status','pending').maybeSingle();if(pending)throw new Error('A withdrawal is already pending');const {data:row,error}=await admin.from('withdrawal_requests').insert({user_id:user.id,method,destination,amount_points:points,amount_usd:points/1000}).select('id').single();if(error)throw new Error(error.message);return json({success:true,id:row.id})}catch(e){return json({success:false,error:e instanceof Error?e.message:'Request failed'},400)}})
+
+const cors = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+const json = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...cors, 'Content-Type': 'application/json' },
+  })
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+  if (req.method !== 'POST') return json({ success: false, error: 'Method not allowed' }, 405)
+
+  try {
+    const url = Deno.env.get('SUPABASE_URL') ?? ''
+    const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '')
+    if (!url || !key || !token) throw new Error('Unauthorized')
+
+    const db = createClient(url, key, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+
+    const { data: auth, error: authError } = await db.auth.getUser(token)
+    if (authError || !auth.user) throw new Error('Unauthorized')
+
+    const body = await req.json()
+
+    const { data, error } = await db.rpc('create_withdrawal_secure', {
+      p_auth_user_id: auth.user.id,
+      p_method: String(body?.method ?? ''),
+      p_destination: String(body?.destination ?? ''),
+    })
+
+    if (error) throw new Error(error.message)
+
+    return json(data ?? { success: true })
+  } catch (e) {
+    return json(
+      { success: false, error: e instanceof Error ? e.message : 'Request failed' },
+      400,
+    )
+  }
+})
