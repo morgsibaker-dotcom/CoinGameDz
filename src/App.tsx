@@ -14,6 +14,7 @@ import AdminUsers from './pages/AdminUsers'
 import AdminTasks from './pages/AdminTasks'
 import AdminWithdrawals from './pages/AdminWithdrawals'
 import AdminRewards from './pages/AdminRewards'
+import AdminSettings from './pages/AdminSettings'
 import { initializeTelegramWebApp } from './services/telegramService'
 import { useTelegramStore } from './store/telegramStore'
 import { useUserStore } from './store/userStore'
@@ -61,6 +62,7 @@ export default function App() {
           <Route path="tasks" element={<AdminTasks />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="rewards" element={<AdminRewards />} />
+          <Route path="settings" element={<AdminSettings />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
