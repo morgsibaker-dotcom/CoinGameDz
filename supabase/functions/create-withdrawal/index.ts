@@ -30,11 +30,20 @@ Deno.serve(async (req) => {
     if (authError || !auth.user) throw new Error('Unauthorized')
 
     const body = await req.json()
+    const method = String(body?.method ?? '').trim()
+    const destination = String(body?.destination ?? '').trim()
+
+    if (!['BaridiMob', 'USDT TON'].includes(method)) {
+      throw new Error('Unsupported withdrawal method')
+    }
+    if (!destination || destination.length > 200) {
+      throw new Error('Invalid withdrawal destination')
+    }
 
     const { data, error } = await db.rpc('create_withdrawal_secure', {
       p_auth_user_id: auth.user.id,
-      p_method: String(body?.method ?? ''),
-      p_destination: String(body?.destination ?? ''),
+      p_method: method,
+      p_destination: destination,
     })
 
     if (error) throw new Error(error.message)
