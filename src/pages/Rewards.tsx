@@ -71,7 +71,7 @@ export default function Rewards() {
       updatePoints(Number(result.new_balance))
       setSpinMessage(Number(result.prize_points) > 0
         ? t('rewards.wheelWon', { label: result.prize_label, points: Number(result.prize_points).toLocaleString() })
-        : '😔')
+        : '📦')
       await new Promise((resolve) => window.setTimeout(resolve, 1200))
     } catch (e) {
       setError(e instanceof Error ? e.message : t('common.error'))
@@ -106,8 +106,12 @@ export default function Rewards() {
                     const left = 50 + Math.cos(radians) * 31
                     const top = 50 + Math.sin(radians) * 31
                     return (
-                      <span key={prize.id} className="absolute z-10 -translate-x-1/2 -translate-y-1/2 text-xl font-black drop-shadow-lg" style={{ left: left + '%', top: top + '%' }}>
-                        {prize.points === 0 ? '😔' : prize.points.toLocaleString()}
+                      <span
+                        key={prize.id}
+                        className="absolute z-10 flex h-9 min-w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md border-2 border-white/70 bg-slate-900/90 px-1 text-[10px] font-black text-white shadow-lg"
+                        style={{ left: left + '%', top: top + '%' }}
+                      >
+                        {prize.points > 0 ? prize.points.toLocaleString() : ''}
                       </span>
                     )
                   })}
