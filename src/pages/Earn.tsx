@@ -144,7 +144,7 @@ export default function Earn() {
             </span>
             {claimed.includes('daily')
               ? <Check className="h-5 w-5 text-emerald-400" />
-              : <span className="font-bold text-sky-400">{busy === 'daily' ? '…' : '+50 DZE'}</span>}
+              : <span className="font-bold text-sky-400">{busy === 'daily' ? '…' : '+50 DZD'}</span>}
           </button>
 
           <button
@@ -163,7 +163,7 @@ export default function Earn() {
               </span>
             </span>
             <span className="font-bold text-sky-400">
-              {busy === 'ad' ? '…' : '+' + adReward + ' DZE'}
+              {busy === 'ad' ? '…' : '+' + adReward + ' DZD'}
             </span>
           </button>
 
@@ -186,7 +186,7 @@ export default function Earn() {
                         <b>{task.title}</b>
                         <p className="mt-1 text-sm text-slate-400">{task.description}</p>
                       </div>
-                      <span className="whitespace-nowrap font-bold text-sky-400">+{task.reward_points} DZE</span>
+                      <span className="whitespace-nowrap font-bold text-sky-400">+{task.reward_points} DZD</span>
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-3 text-xs text-slate-500">
                       <span>
