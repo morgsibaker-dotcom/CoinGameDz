@@ -16,6 +16,7 @@ const defaults: AdminCoreSettings = {
   tap_limit_per_minute: 60,
   daily_ad_limit: 10,
   ad_reward_points: 100,
+  referral_reward_points: 50,
 }
 
 export default function AdminSettings() {
@@ -72,6 +73,7 @@ export default function AdminSettings() {
     { key: 'tap_limit_per_minute', label: 'Tap limit per minute', min: 1 },
     { key: 'daily_ad_limit', label: 'Daily rewarded-ad limit', min: 0 },
     { key: 'ad_reward_points', label: 'Points per rewarded ad', min: 0 },
+    { key: 'referral_reward_points', label: 'Referral reward points', min: 0 },
   ]
 
   return (
