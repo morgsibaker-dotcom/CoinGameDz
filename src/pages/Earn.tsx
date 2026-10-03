@@ -89,7 +89,15 @@ export default function Earn() {
       const result = await completeTask(task.id)
       updatePoints(result.pointsBalance)
       setTasks(items => items.map(item =>
-        item.id === task.id ? { ...item, completed: true } : item,
+        item.id === task.id
+          ? {
+              ...item,
+              completion_count: item.completion_count + 1,
+              completed:
+                item.max_completions_per_user !== null &&
+                item.completion_count + 1 >= item.max_completions_per_user,
+            }
+          : item,
       ))
       setClaimed(v => [...v, task.id])
     } catch (e) {
@@ -167,13 +175,20 @@ export default function Earn() {
                       </div>
                       <span className="whitespace-nowrap font-bold text-sky-400">+{task.reward_points} DZE</span>
                     </div>
+                    <div className="mt-3 flex items-center justify-between gap-3 text-xs text-slate-500">
+                      <span>
+                        {task.max_completions_per_user === null
+                          ? 'Unlimited completions'
+                          : `${task.completion_count}/${task.max_completions_per_user}`}
+                      </span>
+                    </div>
                     <button
                       type="button"
                       disabled={task.completed || busy !== null}
                       onClick={() => claimTask(task)}
                       className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 p-3 font-bold text-slate-950 disabled:opacity-50"
                     >
-                      {task.completed || claimed.includes(task.id)
+                      {task.completed
                         ? <><Check className="h-4 w-4" />{t('earn.completed')}</>
                         : <>{t('earn.complete')}<ExternalLink className="h-4 w-4" /></>}
                     </button>
