@@ -55,13 +55,11 @@ export default function App() {
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route element={<AdminGuard />}>
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/tasks" element={<AdminTasks />} />
-          <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
-          <Route path="/admin/rewards" element={<AdminRewards />} />
-        </Route>
+        <Route path="/admin" element={<AdminGuard><Admin /></AdminGuard>} />
+        <Route path="/admin/users" element={<AdminGuard><AdminUsers /></AdminGuard>} />
+        <Route path="/admin/tasks" element={<AdminGuard><AdminTasks /></AdminGuard>} />
+        <Route path="/admin/withdrawals" element={<AdminGuard><AdminWithdrawals /></AdminGuard>} />
+        <Route path="/admin/rewards" element={<AdminGuard><AdminRewards /></AdminGuard>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
