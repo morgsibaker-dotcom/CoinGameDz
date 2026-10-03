@@ -6,6 +6,7 @@ import Rewards from './pages/Rewards'
 import Referrals from './pages/Referrals'
 import Wallet from './pages/Wallet'
 import Profile from './pages/Profile'
+import History from './pages/History'
 import NotFound from './pages/NotFound'
 import Admin from './pages/Admin'
 import AdminLogin from './pages/AdminLogin'
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="/referrals" element={<Referrals />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/history" element={<History />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminGuard />}>
           <Route index element={<Admin />} />
