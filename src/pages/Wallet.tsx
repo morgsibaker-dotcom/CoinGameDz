@@ -20,6 +20,7 @@ export default function Wallet() {
   const balance = Number(user?.points_balance ?? user?.points ?? 0)
   const minimum = config.minimum_points
   const usd = balance / config.points_per_usd
+  const minimumUsd = minimum / config.points_per_usd
   const dzd = usd * config.usd_to_dzd
   const usdt = usd
 
@@ -57,7 +58,71 @@ export default function Wallet() {
         <h1 className="mt-2 text-3xl font-black">{t('wallet.title')}</h1>
         <div className="mt-6 rounded-3xl border border-white/10 bg-slate-900 p-5">
           <p className="text-sm text-slate-400">{t('wallet.balance')}</p>
-          <p className="mt-1 text-4xl font-black">{balance.toLocaleString()} <span className="text-lg text-sky-400">DZD</span></p>
+          <p className="mt-1 text-4xl font-black">{'</p>
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-500">USD</p><p className="font-bold">{'</div>
+            <div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-500">DZD</p><p className="font-bold">{dzd.toFixed(2)} DZD</p></div>
+            <div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-500">USDT TON</p><p className="font-bold">{usdt.toFixed(6)}</p></div>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">{t('wallet.minimum', { amount: minimumUsd.toFixed(2) })}</p>
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            {['BaridiMob', 'USDT TON'].map(option => (
+              <button key={option} type="button" onClick={() => setMethod(option)} className={method === option ? 'rounded-xl p-3 text-sm font-bold bg-sky-500 text-slate-950' : 'rounded-xl p-3 text-sm font-bold bg-slate-950 text-slate-300'}>{option}</button>
+            ))}
+          </div>
+          <p className="mt-2 text-center text-xs text-slate-500">{method === 'BaridiMob' ? 'Payout: ' + dzd.toFixed(2) + ' DZD' : 'Payout: ' + usdt.toFixed(6) + ' USDT'}</p>
+          <input value={address} onChange={e => setAddress(e.target.value)} placeholder={method === 'BaridiMob' ? t('wallet.baridi') : t('wallet.ton')} className="mt-3 w-full rounded-xl border border-white/10 bg-slate-950 p-3 outline-none" />
+          <button type="button" onClick={request} disabled={sent || busy || balance < minimum} className="mt-3 w-full rounded-2xl bg-sky-500 py-3 font-bold text-slate-950 disabled:opacity-50">{sent ? t('wallet.submitted') : busy ? t('wallet.submitting') : t('wallet.request')}</button>
+          <p className="mt-3 text-center text-xs text-slate-500">{error || (sent ? t('wallet.pending') : t('wallet.withdrawalsNote'))}</p>
+        </div>
+      </section>
+      <BottomNavigation />
+    </main>
+  )
+}
+ + usd.toFixed(2)} <span className="text-lg text-sky-400">USD</span></p>
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-500">USD</p><p className="font-bold">{usd.toFixed(2)} USD</p></div>
+            <div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-500">DZD</p><p className="font-bold">{dzd.toFixed(2)} DZD</p></div>
+            <div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-500">USDT TON</p><p className="font-bold">{usdt.toFixed(6)}</p></div>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">{t('wallet.minimum', { amount: config.minimum_points.toLocaleString() })}</p>
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            {['BaridiMob', 'USDT TON'].map(option => (
+              <button key={option} type="button" onClick={() => setMethod(option)} className={method === option ? 'rounded-xl p-3 text-sm font-bold bg-sky-500 text-slate-950' : 'rounded-xl p-3 text-sm font-bold bg-slate-950 text-slate-300'}>{option}</button>
+            ))}
+          </div>
+          <p className="mt-2 text-center text-xs text-slate-500">{method === 'BaridiMob' ? 'Payout: ' + dzd.toFixed(2) + ' DZD' : 'Payout: ' + usdt.toFixed(6) + ' USDT'}</p>
+          <input value={address} onChange={e => setAddress(e.target.value)} placeholder={method === 'BaridiMob' ? t('wallet.baridi') : t('wallet.ton')} className="mt-3 w-full rounded-xl border border-white/10 bg-slate-950 p-3 outline-none" />
+          <button type="button" onClick={request} disabled={sent || busy || balance < minimum} className="mt-3 w-full rounded-2xl bg-sky-500 py-3 font-bold text-slate-950 disabled:opacity-50">{sent ? t('wallet.submitted') : busy ? t('wallet.submitting') : t('wallet.request')}</button>
+          <p className="mt-3 text-center text-xs text-slate-500">{error || (sent ? t('wallet.pending') : t('wallet.withdrawalsNote'))}</p>
+        </div>
+      </section>
+      <BottomNavigation />
+    </main>
+  )
+}
+ + usd.toFixed(2)}</p></div>
+            <div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-500">DZD</p><p className="font-bold">{dzd.toFixed(2)} DZD</p></div>
+            <div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-500">USDT TON</p><p className="font-bold">{usdt.toFixed(6)}</p></div>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">{t('wallet.minimum', { amount: minimumUsd.toFixed(2) })}</p>
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            {['BaridiMob', 'USDT TON'].map(option => (
+              <button key={option} type="button" onClick={() => setMethod(option)} className={method === option ? 'rounded-xl p-3 text-sm font-bold bg-sky-500 text-slate-950' : 'rounded-xl p-3 text-sm font-bold bg-slate-950 text-slate-300'}>{option}</button>
+            ))}
+          </div>
+          <p className="mt-2 text-center text-xs text-slate-500">{method === 'BaridiMob' ? 'Payout: ' + dzd.toFixed(2) + ' DZD' : 'Payout: ' + usdt.toFixed(6) + ' USDT'}</p>
+          <input value={address} onChange={e => setAddress(e.target.value)} placeholder={method === 'BaridiMob' ? t('wallet.baridi') : t('wallet.ton')} className="mt-3 w-full rounded-xl border border-white/10 bg-slate-950 p-3 outline-none" />
+          <button type="button" onClick={request} disabled={sent || busy || balance < minimum} className="mt-3 w-full rounded-2xl bg-sky-500 py-3 font-bold text-slate-950 disabled:opacity-50">{sent ? t('wallet.submitted') : busy ? t('wallet.submitting') : t('wallet.request')}</button>
+          <p className="mt-3 text-center text-xs text-slate-500">{error || (sent ? t('wallet.pending') : t('wallet.withdrawalsNote'))}</p>
+        </div>
+      </section>
+      <BottomNavigation />
+    </main>
+  )
+}
+ + usd.toFixed(2)} <span className="text-lg text-sky-400">USD</span></p>
           <div className="mt-4 grid grid-cols-3 gap-2">
             <div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-500">USD</p><p className="font-bold">{usd.toFixed(2)} USD</p></div>
             <div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-500">DZD</p><p className="font-bold">{dzd.toFixed(2)} DZD</p></div>
