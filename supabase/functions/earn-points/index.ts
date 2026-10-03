@@ -15,14 +15,13 @@ Deno.serve(async(req)=>{
     const body=await req.json()
     const action=body?.action
     const providerEventId=body?.provider_event_id
-    const amounts:Record<string,number>={tap:1,daily_checkin:50,task:250}
+    const amounts:Record<string,number>={daily_checkin:50,task:250}
     let amount=amounts[action]
-    const {data:settingsRows,error:settingsError}=await admin.from('app_settings').select('key,value').in('key',['ad_reward_points','daily_ad_limit','tap_limit_per_minute','points_per_usd'])
+    const {data:settingsRows,error:settingsError}=await admin.from('app_settings').select('key,value').in('key',['ad_reward_points','daily_ad_limit','points_per_usd'])
     if(settingsError)throw new Error(settingsError.message)
     const settings=Object.fromEntries((settingsRows??[]).map((row:any)=>[row.key,Number(row.value?.value)]))
     const adRewardPoints=settings.ad_reward_points>0?settings.ad_reward_points:100
     const dailyAdLimit=Number.isFinite(settings.daily_ad_limit)&&settings.daily_ad_limit>=0?settings.daily_ad_limit:10
-    const tapLimit=Number.isFinite(settings.tap_limit_per_minute)&&settings.tap_limit_per_minute>0?settings.tap_limit_per_minute:60
     const pointsPerUsd=Number.isFinite(settings.points_per_usd)&&settings.points_per_usd>0?settings.points_per_usd:1000
     if(action==='ad'){
       amount=adRewardPoints
@@ -49,12 +48,6 @@ Deno.serve(async(req)=>{
     const {data:user,error:ue}=await admin.from('users').select('id').eq('auth_user_id',session.user.id).maybeSingle()
     if(ue)throw new Error(ue.message)
     if(!user)throw new Error('User profile not found')
-    if(action==='tap'){
-      const since=new Date(Date.now()-60000).toISOString()
-      const {count,error:ce}=await admin.from('point_transactions').select('id',{count:'exact',head:true}).eq('user_id',user.id).eq('source','tap').gte('created_at',since)
-      if(ce)throw new Error(ce.message)
-      if((count??0)>=tapLimit)throw new Error('Tap limit reached. Try again later.')
-    }
     const description=action==='tap'?'Tap reward':action==='daily_checkin'?'Daily check-in':action==='ad'?'Ad reward':'Task reward'
     const {data:result,error:awardError}=await admin.rpc('award_points_atomic',{
       p_user_id:user.id,
