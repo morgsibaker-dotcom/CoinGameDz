@@ -20,7 +20,7 @@ export const useUserStore = create<UserStore>((set) => ({
       const { useTelegramStore } =
         await import('./telegramStore')
 
-      const { getUserByTelegramId } =
+      const { getUserByTelegramId, getReferralStats } =
         await import('../services/userService')
 
       const telegramUser =
@@ -39,6 +39,14 @@ export const useUserStore = create<UserStore>((set) => ({
 
       const points =
         Number(dbUser.points_balance ?? 0)
+
+      let referralEarnings = Number(dbUser.referral_earnings ?? 0)
+      try {
+        const referralStats = await getReferralStats()
+        referralEarnings = referralStats.referral_earnings
+      } catch {
+        // Keep the database value if referral stats are temporarily unavailable.
+      }
 
       const user = {
         id: String(dbUser.id),
@@ -71,8 +79,7 @@ export const useUserStore = create<UserStore>((set) => ({
         referralCount:
           Number(dbUser.referral_count ?? 0),
 
-        referralEarnings:
-          Number(dbUser.referral_earnings ?? 0),
+        referralEarnings,
       }
 
       set({ user })
