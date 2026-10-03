@@ -29,7 +29,7 @@ export const supportedLanguages: ReadonlyArray<{
 ]
 
 function isLanguageCode(value: string | null): value is LanguageCode {
-  return value === 'ar' || value === 'en' || value === 'fr'
+  return value === 'ar' || value === 'en' || value === 'fr' || value === 'tr' || value === 'es'
 }
 
 const savedLanguage =
