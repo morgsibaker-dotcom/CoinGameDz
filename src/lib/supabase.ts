@@ -1,21 +1,25 @@
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+
+// Supabase now recommends the publishable key for browser apps.
+// Keep the legacy anon variable as a fallback for compatibility.
+const supabasePublishableKey =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
+const supabaseAnonKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+
+const clientKey = supabasePublishableKey || supabaseAnonKey
 
 /*
- * Cloudflare Pages can build the frontend before runtime environment
- * variables are configured. Do not let a missing Supabase variable
- * crash the entire React bundle and produce a blank page.
- *
- * When the real variables are present, the real Supabase client is used.
- * When they are missing, the app can still render; backend actions will
- * fail normally until the variables are added in Cloudflare Pages.
+ * Do not let a missing Supabase variable crash the whole React bundle.
+ * The app can still render, while backend requests fail normally until
+ * the Cloudflare Pages variables are configured.
  */
 const clientUrl = supabaseUrl || 'https://placeholder.supabase.co'
-const clientKey = supabaseAnonKey || 'placeholder-anon-key'
+const safeClientKey = clientKey || 'placeholder-anon-key'
 
-export const supabase = createClient(clientUrl, clientKey)
+export const supabase = createClient(clientUrl, safeClientKey)
 
 export const isSupabaseConfigured =
-  Boolean(supabaseUrl && supabaseAnonKey)
+  Boolean(supabaseUrl && clientKey)
