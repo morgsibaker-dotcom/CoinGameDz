@@ -7,6 +7,7 @@ export interface AdminCoreSettings {
   tap_limit_per_minute: number
   daily_ad_limit: number
   ad_reward_points: number
+  referral_reward_points: number
 }
 
 async function adminId() {
@@ -32,6 +33,7 @@ export async function updateAdminCoreSettings(settings: AdminCoreSettings) {
     p_tap_limit_per_minute: settings.tap_limit_per_minute,
     p_daily_ad_limit: settings.daily_ad_limit,
     p_ad_reward_points: settings.ad_reward_points,
+    p_referral_reward_points: settings.referral_reward_points,
   })
   if (error) throw new Error(error.message)
   if (!data?.success) throw new Error(data?.error ?? 'Settings update failed')
