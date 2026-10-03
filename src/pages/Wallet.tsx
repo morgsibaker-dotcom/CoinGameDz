@@ -10,6 +10,7 @@ type WithdrawalConfig = { minimum_points: number; points_per_usd: number; usd_to
 export default function Wallet() {
   const { t } = useTranslation()
   const user = useUserStore(s => s.user)
+  const loadUser = useUserStore(s => s.loadUser)
   const [method, setMethod] = useState('BaridiMob')
   const [address, setAddress] = useState('')
   const [sent, setSent] = useState(false)
@@ -42,6 +43,7 @@ export default function Wallet() {
       if (invokeError) throw new Error(invokeError.message)
       if (!result?.success) throw new Error(result?.error || 'Request failed')
       setSent(true)
+      await loadUser()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Request failed')
     } finally { setBusy(false) }
