@@ -1,12 +1,8 @@
-import { ReactNode, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
-interface AdminGuardProps {
-  children?: ReactNode
-}
-
-export default function AdminGuard({ children }: AdminGuardProps) {
+export default function AdminGuard() {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
 
@@ -57,5 +53,5 @@ export default function AdminGuard({ children }: AdminGuardProps) {
     return <Navigate to="/admin/login" replace />
   }
 
-  return children ? <>{children}</> : <Outlet />
+  return <Outlet />
 }
