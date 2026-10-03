@@ -12,6 +12,8 @@ import {
 const defaults: AdminCoreSettings = {
   withdrawal_min_points: 10000,
   points_per_usd: 1000,
+  usd_to_dzd: 130,
+  usd_to_usdt: 1,
   tap_limit_per_minute: 60,
   daily_ad_limit: 10,
   ad_reward_points: 100,
@@ -103,9 +105,11 @@ export default function AdminSettings() {
     }
   }
 
-  const fields: Array<{ key: keyof AdminCoreSettings; label: string; min: number }> = [
+  const fields: Array<{ key: keyof AdminCoreSettings; label: string; min: number; step?: string }> = [
     { key: 'withdrawal_min_points', label: 'Minimum withdrawal points', min: 1 },
-    { key: 'points_per_usd', label: 'Points per 1 USD', min: 1 },
+    { key: 'points_per_usd', label: 'Points = 1 USD', min: 1 },
+    { key: 'usd_to_dzd', label: '1 USD = DZD', min: 0.01, step: '0.01' },
+    { key: 'usd_to_usdt', label: '1 USD = USDT', min: 0.000001, step: '0.000001' },
     { key: 'tap_limit_per_minute', label: 'Tap limit per minute', min: 1 },
     { key: 'daily_ad_limit', label: 'Daily rewarded-ad limit', min: 0 },
     { key: 'ad_reward_points', label: 'Points per rewarded ad', min: 0 },
@@ -134,7 +138,7 @@ export default function AdminSettings() {
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
           <h2 className="text-xl font-bold">Core Economy</h2>
-          <p className="mt-1 text-sm text-slate-400">These values control earning limits and withdrawals.</p>
+          <p className="mt-1 text-sm text-slate-400">You control the points and payout exchange rates here.</p>
           {loading ? (
             <p className="mt-6 text-slate-400">Loading...</p>
           ) : (
@@ -146,12 +150,17 @@ export default function AdminSettings() {
                     <input
                       type="number"
                       min={field.min}
+                      step={field.step}
                       value={settings[field.key]}
                       onChange={e => update(field.key, e.target.value)}
                       className="w-full rounded-xl border border-slate-700 bg-slate-800 p-3"
                     />
                   </label>
                 ))}
+              </div>
+              <div className="mt-4 rounded-xl bg-slate-950 p-4 text-sm text-slate-300">
+                {settings.points_per_usd.toLocaleString()} points = $1 = {settings.usd_to_dzd.toLocaleString()} DZD = {settings.usd_to_usdt.toFixed(6)} USDT
+                <p className="mt-1 text-xs text-slate-500">These are your configured payout rates, not live market prices.</p>
               </div>
               <button type="button" onClick={() => void saveSettings()} disabled={saving} className="mt-5 w-full rounded-xl bg-sky-500 p-3 font-bold text-slate-950 disabled:opacity-50">
                 {saving ? 'Saving...' : 'Save Core Settings'}
