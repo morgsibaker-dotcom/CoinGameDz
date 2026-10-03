@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 
-export type EarnAction = 'tap' | 'daily_checkin' | 'task' | 'ad'
+export type EarnAction = 'daily_checkin' | 'task' | 'ad'
 
 export async function awardPoints(
   action: EarnAction,
