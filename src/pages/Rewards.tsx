@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Trophy } from 'lucide-react'
+import { Package, Trophy } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import Header from '../components/common/Header'
 import BottomNavigation from '../components/common/BottomNavigation'
@@ -11,6 +11,15 @@ type WheelPrize = { id: string; label: string; points: number; probability: numb
 type SpinResult = { success: boolean; prize_id: string; prize_points: number; prize_label: string; new_balance: number }
 
 const wheelColors = ['#0ea5e9', '#6366f1', '#8b5cf6', '#d946ef', '#10b981', '#06b6d4', '#f59e0b', '#f43f5e', '#14b8a6', '#ec4899']
+
+const shufflePrizes = (items: WheelPrize[]) => {
+  const shuffled = [...items]
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1))
+    ;[shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]]
+  }
+  return shuffled
+}
 
 export default function Rewards() {
   const { t } = useTranslation()
@@ -57,7 +66,7 @@ export default function Rewards() {
         // Keep the wheel visible even if the database currently returns no prize rows.
         // The real spin is still handled by the Supabase spin_wheel RPC.
         if (loadedPrizes.length > 0) {
-          setWheelPrizes(loadedPrizes)
+          setWheelPrizes(shufflePrizes(loadedPrizes))
         } else {
           const fallbackPrizes: WheelPrize[] = [
             ...Array.from({ length: 6 }, (_, index) => ({
@@ -96,7 +105,7 @@ export default function Rewards() {
               is_active: true,
             })),
           ]
-          setWheelPrizes(fallbackPrizes)
+          setWheelPrizes(shufflePrizes(fallbackPrizes))
         }
       })
 
@@ -160,7 +169,7 @@ export default function Rewards() {
               label: result.prize_label,
               points: Number(result.prize_points).toLocaleString(),
             })
-          : '📦'
+          : '📦 صندوق فارغ'
       )
 
       await new Promise((resolve) => window.setTimeout(resolve, 1200))
@@ -187,30 +196,53 @@ export default function Rewards() {
         <div className="mt-4 rounded-2xl border border-sky-500/20 bg-gradient-to-br from-sky-500/10 via-slate-900 to-indigo-500/10 p-5">
           <div className="text-center">
             <div className="mb-5 flex justify-center">
-              <div className="relative h-72 w-72 max-w-full">
-                <div className="absolute -top-3 left-1/2 z-20 -translate-x-1/2 text-2xl">▼</div>
+              <div className="relative h-80 w-80 max-w-full sm:h-[22rem] sm:w-[22rem]">
+                <div className="absolute -top-5 left-1/2 z-30 -translate-x-1/2">
+                  <div className="h-0 w-0 border-l-[13px] border-r-[13px] border-t-[28px] border-l-transparent border-r-transparent border-t-white drop-shadow-[0_3px_4px_rgba(0,0,0,.6)]" />
+                </div>
+
                 <div
-                  className="relative h-full w-full rounded-full border-8 border-slate-800 shadow-2xl transition-transform duration-[1200ms] ease-out"
+                  className="relative h-full w-full rounded-full border-[10px] border-slate-800 shadow-[0_18px_45px_rgba(0,0,0,.45)] transition-transform duration-[1800ms] ease-out"
                   style={{ ...wheelStyle, transform: 'rotate(' + wheelRotation + 'deg)' }}
                 >
+                  <div className="absolute inset-1 rounded-full border-2 border-white/25" />
+
                   {wheelPrizes.map((prize, index) => {
                     const before = wheelPrizes.slice(0, index).reduce((sum, item) => sum + item.probability, 0)
                     const centerAngle = ((before + prize.probability / 2) / wheelTotal) * 360
                     const radians = (centerAngle - 90) * Math.PI / 180
-                    const left = 50 + Math.cos(radians) * 31
-                    const top = 50 + Math.sin(radians) * 31
+                    const left = 50 + Math.cos(radians) * 35
+                    const top = 50 + Math.sin(radians) * 35
 
                     return (
-                      <span
+                      <div
                         key={prize.id}
-                        className="absolute z-10 flex h-9 min-w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md border-2 border-white/70 bg-slate-900/90 px-1 text-[10px] font-black text-white shadow-lg"
+                        className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center"
                         style={{ left: left + '%', top: top + '%' }}
                       >
-                        {prize.points > 0 ? prize.points.toLocaleString() : '📦'}
-                      </span>
+                        <div
+                          className={[
+                            'flex h-10 w-10 items-center justify-center rounded-xl border-2 shadow-lg backdrop-blur-sm',
+                            'sm:h-11 sm:w-11',
+                            prize.points > 0
+                              ? 'border-white/80 bg-slate-950/90 text-amber-300'
+                              : 'border-white/50 bg-slate-900/75 text-white/80',
+                          ].join(' ')}
+                        >
+                          <Package className="h-5 w-5 sm:h-5 sm:w-5" strokeWidth={2.2} />
+                        </div>
+                        {prize.points > 0 && (
+                          <span className="mt-0.5 rounded-full bg-slate-950/90 px-1.5 py-0.5 text-[9px] font-black leading-none text-white shadow-md sm:text-[10px]">
+                            {prize.points.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
                     )
                   })}
-                  <div className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-slate-900 bg-white shadow-lg" />
+
+                  <div className="absolute left-1/2 top-1/2 z-20 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-slate-950 bg-gradient-to-br from-white to-slate-300 shadow-[0_4px_15px_rgba(0,0,0,.5)]">
+                    <div className="h-5 w-5 rounded-full bg-slate-800 shadow-inner" />
+                  </div>
                 </div>
               </div>
             </div>
