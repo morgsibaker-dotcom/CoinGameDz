@@ -17,6 +17,7 @@ export default function Wallet() {
   const [busy, setBusy] = useState(false)
   const [config, setConfig] = useState<WithdrawalConfig>({ minimum_points: 10000, points_per_usd: 1000, usd_to_dzd: 130, usd_to_usdt: 1 })
   const balance = Number(user?.points_balance ?? user?.points ?? 0)
+  const minimum = config.minimum_points
   const usd = balance / config.points_per_usd
   const dzd = usd * config.usd_to_dzd
   const usdt = usd * config.usd_to_usdt
@@ -35,7 +36,7 @@ export default function Wallet() {
   }, [])
 
   const request = async () => {
-    if (!address.trim() || balance < config.minimum_points || busy) return
+    if (!address.trim() || balance < minimum || busy) return
     setBusy(true); setError('')
     try {
       const { data: result, error: invokeError } = await supabase.functions.invoke('create-withdrawal', { body: { method, destination: address.trim() } })
