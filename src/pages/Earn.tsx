@@ -27,6 +27,7 @@ export default function Earn() {
   const [adReward, setAdReward] = useState(100)
   const [tasks, setTasks] = useState<Task[]>([])
   const [error, setError] = useState('')
+  const [adReady, setAdReady] = useState(false)
 
   const loadTasks = async () => {
     try {
@@ -38,12 +39,24 @@ export default function Earn() {
 
   useEffect(() => {
     void loadTasks()
+    let timer: number | undefined
+    const checkAdsgram = () => {
+      if (window.Adsgram) {
+        setAdReady(true)
+        if (timer) window.clearInterval(timer)
+      }
+    }
+    checkAdsgram()
+    timer = window.setInterval(checkAdsgram, 500)
     supabase.rpc('get_public_ad_config').then(({ data }) => {
       if (!data) return
       setBlockId(String(data.placement ?? ''))
       const reward = Number(data.reward_points)
       if (Number.isFinite(reward) && reward > 0) setAdReward(reward)
     })
+    return () => {
+      if (timer) window.clearInterval(timer)
+    }
   }, [])
 
   const claimDaily = async () => {
@@ -62,7 +75,7 @@ export default function Earn() {
   }
 
   const watchAd = async () => {
-    if (busy || !blockId || !window.Adsgram) return
+    if (busy || !blockId || !adReady || !window.Adsgram) return
     setBusy('ad')
     setError('')
     try {
@@ -136,7 +149,7 @@ export default function Earn() {
 
           <button
             type="button"
-            disabled={busy !== null || !blockId || !window.Adsgram}
+            disabled={busy !== null || !blockId || !adReady}
             onClick={watchAd}
             className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-slate-900 p-4 text-left disabled:opacity-60"
           >
@@ -145,7 +158,7 @@ export default function Earn() {
               <span>
                 <b>{t('earn.ad')}</b>
                 <small className="mt-1 block text-slate-500">
-                  {blockId ? t('earn.rewardedAd') : t('earn.notConfigured')}
+                  {!blockId ? t('earn.notConfigured') : !adReady ? t('earn.adUnavailable') : t('earn.rewardedAd')}
                 </small>
               </span>
             </span>
