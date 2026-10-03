@@ -1,9 +1,9 @@
 import { ReactNode, useEffect, useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
 interface AdminGuardProps {
-  children: ReactNode
+  children?: ReactNode
 }
 
 export default function AdminGuard({ children }: AdminGuardProps) {
@@ -46,12 +46,16 @@ export default function AdminGuard({ children }: AdminGuardProps) {
   }, [])
 
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">Checking admin access...</div>
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
+        Checking admin access...
+      </div>
+    )
   }
 
   if (!isAdmin) {
     return <Navigate to="/admin/login" replace />
   }
 
-  return <>{children}</>
+  return children ? <>{children}</> : <Outlet />
 }
