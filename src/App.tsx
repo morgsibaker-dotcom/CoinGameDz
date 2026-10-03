@@ -32,7 +32,7 @@ export default function App() {
       initializeTelegramWebApp()
       await initializeTelegram()
       const telegramLanguage = useTelegramStore.getState().telegramLanguageCode
-      if (telegramLanguage === 'ar' || telegramLanguage === 'fr' || telegramLanguage === 'en') {
+      if (['ar', 'fr', 'en', 'tr', 'es'].includes(telegramLanguage)) {
         applyLanguage(telegramLanguage)
       }
       if (mounted) {
