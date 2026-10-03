@@ -65,7 +65,7 @@ export default function Wallet() {
           </div>
           <p className="mt-2 text-center text-xs text-slate-500">{method === "BaridiMob" ? "Payout: " + dzd.toFixed(2) + " DZD" : "Payout: " + usdt.toFixed(6) + " USDT"}</p>
           <input value={address} onChange={e => setAddress(e.target.value)} placeholder={method === 'BaridiMob' ? t('wallet.baridi') : t('wallet.ton')} className="mt-3 w-full rounded-xl border border-white/10 bg-slate-950 p-3 outline-none" />
-          <button type="button" onClick={request} disabled={sent || busy || balance < minimum} className="mt-3 w-full rounded-2xl bg-sky-500 py-3 font-bold text-slate-950 disabled:opacity-50">{sent ? t('wallet.submitted') : busy ? t('wallet.submitting') : t('wallet.request')}</button>
+          <button type="button" onClick={request} disabled={sent || busy || balance < config.minimum_points} className="mt-3 w-full rounded-2xl bg-sky-500 py-3 font-bold text-slate-950 disabled:opacity-50">{sent ? t('wallet.submitted') : busy ? t('wallet.submitting') : t('wallet.request')}</button>
           <p className="mt-3 text-center text-xs text-slate-500">{error || (sent ? t('wallet.pending') : t('wallet.withdrawalsNote'))}</p>
         </div>
       </section>
