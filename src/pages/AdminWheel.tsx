@@ -110,8 +110,8 @@ export default function AdminWheel() {
       const points = Number(form.points)
       const probability = Number(form.probability)
 
-      if (!form.label.trim()) {
-        throw new Error('Prize label is required')
+      if (points > 0 && !form.label.trim()) {
+        throw new Error('Prize label is required for a reward')
       }
 
       if (!Number.isFinite(points) || points < 0) {
@@ -281,8 +281,7 @@ export default function AdminWheel() {
                     label: event.target.value,
                   })
                 }
-                placeholder="Prize label"
-                required
+                placeholder="Prize label (leave empty for 😔)"
                 className="rounded-xl bg-slate-800 px-4 py-3 outline-none"
               />
 
@@ -370,7 +369,7 @@ export default function AdminWheel() {
                     className="border-b border-slate-800 last:border-0"
                   >
                     <td className="px-4 py-4 font-semibold">
-                      {prize.label}
+                      {prize.points === 0 ? '😔' : prize.label}
                     </td>
 
                     <td className="px-4 py-4">
