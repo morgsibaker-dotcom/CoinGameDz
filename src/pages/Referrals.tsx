@@ -17,7 +17,7 @@ export default function Referrals() {
       .catch(error => console.error('[DzCoinEren] Referral stats failed:', error))
   }, [])
 
-  const code = user?.referralCode || 'DZD-XXXXXX'
+  const code = user?.referralCode || 'REF-XXXXXX'
   const botUsername = 'CoinGameDz_Bot'
   const invite = typeof window !== 'undefined'
     ? 'https://t.me/' + botUsername + '?startapp=ref_' + code
