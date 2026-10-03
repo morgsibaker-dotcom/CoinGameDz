@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Header from '../components/common/Header'
 import BottomNavigation from '../components/common/BottomNavigation'
@@ -26,6 +27,10 @@ export default function Profile() {
             <div className="rounded-2xl bg-slate-950 p-4"><p className="text-xs text-slate-500">{t('profile.balance')}</p><p className="mt-1 text-xl font-black">{Number(user?.points ?? user?.points_balance ?? 0).toLocaleString()} DZD</p></div>
             <div className="rounded-2xl bg-slate-950 p-4"><p className="text-xs text-slate-500">{t('profile.referrals')}</p><p className="mt-1 text-xl font-black">{user?.referralCount ?? 0}</p></div>
           </div>
+          <Link to="/history" className="mt-3 block rounded-2xl border border-sky-500/20 bg-sky-500/10 p-4 active:scale-[.99]">
+            <p className="text-sm font-bold text-sky-300">{t('profile.history')}</p>
+            <p className="mt-1 text-xs text-slate-400">{t('history.subtitle')}</p>
+          </Link>
           <div className="mt-3 rounded-2xl bg-slate-950 p-4"><p className="text-xs text-slate-500">{t('profile.code')}</p><p className="mt-1 font-bold tracking-wider">{user?.referralCode || 'REF-XXXXXX'}</p></div>
           <div className="mt-3 rounded-2xl bg-slate-950 p-4">
             <p className="text-xs text-slate-500">{t('profile.language')}</p>
