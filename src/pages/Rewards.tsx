@@ -10,7 +10,7 @@ type Leader = { user_id: string; rank: number; display_name: string; points_bala
 type WheelPrize = { id: string; label: string; points: number; probability: number; is_active: boolean }
 type SpinResult = { success: boolean; prize_id: string; prize_points: number; prize_label: string; new_balance: number }
 
-const wheelColors = ['#0ea5e9', '#6366f1', '#8b5cf6', '#d946ef', '#10b981', '#06b6d4', '#f59e0b', '#f43f5e']
+const wheelColors = ['#0ea5e9', '#6366f1', '#8b5cf6', '#d946ef', '#10b981', '#06b6d4', '#f59e0b', '#f43f5e', '#14b8a6', '#ec4899']
 
 export default function Rewards() {
   const { t } = useTranslation()
@@ -150,7 +150,7 @@ export default function Rewards() {
                         className="absolute z-10 flex h-9 min-w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md border-2 border-white/70 bg-slate-900/90 px-1 text-[10px] font-black text-white shadow-lg"
                         style={{ left: left + '%', top: top + '%' }}
                       >
-                        {prize.points > 0 ? prize.points.toLocaleString() : ''}
+                        {prize.points > 0 ? prize.points.toLocaleString() : '📦'}
                       </span>
                     )
                   })}
