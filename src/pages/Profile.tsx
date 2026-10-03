@@ -26,7 +26,7 @@ export default function Profile() {
             <div className="rounded-2xl bg-slate-950 p-4"><p className="text-xs text-slate-500">{t('profile.balance')}</p><p className="mt-1 text-xl font-black">{Number(user?.points ?? user?.points_balance ?? 0).toLocaleString()} DZD</p></div>
             <div className="rounded-2xl bg-slate-950 p-4"><p className="text-xs text-slate-500">{t('profile.referrals')}</p><p className="mt-1 text-xl font-black">{user?.referralCount ?? 0}</p></div>
           </div>
-          <div className="mt-3 rounded-2xl bg-slate-950 p-4"><p className="text-xs text-slate-500">{t('profile.code')}</p><p className="mt-1 font-bold tracking-wider">{user?.referralCode || 'DZD-XXXXXX'}</p></div>
+          <div className="mt-3 rounded-2xl bg-slate-950 p-4"><p className="text-xs text-slate-500">{t('profile.code')}</p><p className="mt-1 font-bold tracking-wider">{user?.referralCode || 'REF-XXXXXX'}</p></div>
           <div className="mt-3 rounded-2xl bg-slate-950 p-4">
             <p className="text-xs text-slate-500">{t('profile.language')}</p>
             <select
