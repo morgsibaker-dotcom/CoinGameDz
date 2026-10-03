@@ -23,6 +23,41 @@ export default function Rewards() {
   const [spinMessage, setSpinMessage] = useState('')
   const [wheelRotation, setWheelRotation] = useState(0)
 
+  useEffect(() => {
+    let mounted = true
+
+    if (!supabaseKey) {
+      setError('Supabase browser key is missing from the production build.')
+      return () => { mounted = false }
+    }
+
+    supabase.rpc('get_top_users', { p_limit: 100 }).then(({ data, error }) => {
+      if (!mounted) return
+      if (!error) setLeaders((data ?? []) as Leader[])
+    })
+
+    supabase
+      .from('wheel_prizes')
+      .select('id,label,points,probability,is_active')
+      .eq('is_active', true)
+      .order('id', { ascending: true })
+      .then(({ data, error }) => {
+        if (!mounted) return
+        if (error) {
+          console.error('[CoinGameDz] Wheel prizes unavailable:', error.message)
+          setError(error.message)
+          return
+        }
+        setWheelPrizes(((data ?? []) as WheelPrize[]).map((item) => ({
+          ...item,
+          points: Number(item.points),
+          probability: Number(item.probability),
+        })))
+      })
+
+    return () => { mounted = false }
+  }, [])
+
 
   const wheelTotal = useMemo(() => wheelPrizes.reduce((sum, prize) => sum + prize.probability, 0), [wheelPrizes])
 
