@@ -48,11 +48,56 @@ export default function Rewards() {
           setError(error.message)
           return
         }
-        setWheelPrizes(((data ?? []) as WheelPrize[]).map((item) => ({
+        const loadedPrizes = ((data ?? []) as WheelPrize[]).map((item) => ({
           ...item,
           points: Number(item.points),
           probability: Number(item.probability),
-        })))
+        }))
+
+        // Keep the wheel visible even if the database currently returns no prize rows.
+        // The real spin is still handled by the Supabase spin_wheel RPC.
+        if (loadedPrizes.length > 0) {
+          setWheelPrizes(loadedPrizes)
+        } else {
+          const fallbackPrizes: WheelPrize[] = [
+            ...Array.from({ length: 6 }, (_, index) => ({
+              id: 'fallback-15-' + index,
+              label: '15 points',
+              points: 15,
+              probability: 5,
+              is_active: true,
+            })),
+            {
+              id: 'fallback-100',
+              label: '100 points',
+              points: 100,
+              probability: 10,
+              is_active: true,
+            },
+            {
+              id: 'fallback-500',
+              label: '500 points',
+              points: 500,
+              probability: 3,
+              is_active: true,
+            },
+            {
+              id: 'fallback-1000',
+              label: '1000 points',
+              points: 1000,
+              probability: 2,
+              is_active: true,
+            },
+            ...Array.from({ length: 11 }, (_, index) => ({
+              id: 'fallback-empty-' + index,
+              label: 'Empty box',
+              points: 0,
+              probability: 5,
+              is_active: true,
+            })),
+          ]
+          setWheelPrizes(fallbackPrizes)
+        }
       })
 
     return () => { mounted = false }
@@ -88,7 +133,18 @@ export default function Rewards() {
       if (rpcError) throw new Error(rpcError.message)
 
       const result = data as SpinResult
-      const prizeIndex = wheelPrizes.findIndex((prize) => prize.id === result.prize_id)
+      let prizeIndex = wheelPrizes.findIndex((prize) => prize.id === result.prize_id)
+
+      // If the visual wheel is using the fallback layout, place the animation
+      // on a segment matching the actual RPC result.
+      if (prizeIndex < 0) {
+        const matchingIndexes = wheelPrizes
+          .map((prize, index) => prize.points === Number(result.prize_points) ? index : -1)
+          .filter((index) => index >= 0)
+        if (matchingIndexes.length > 0) {
+          prizeIndex = matchingIndexes[Math.floor(Math.random() * matchingIndexes.length)]
+        }
+      }
 
       if (prizeIndex >= 0 && wheelTotal > 0) {
         const before = wheelPrizes.slice(0, prizeIndex).reduce((sum, item) => sum + item.probability, 0)
