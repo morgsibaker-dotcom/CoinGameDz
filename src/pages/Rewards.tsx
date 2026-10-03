@@ -22,9 +22,26 @@ export default function Rewards() {
   const [spinning, setSpinning] = useState(false)
   const [spinMessage, setSpinMessage] = useState('')
   const [wheelRotation, setWheelRotation] = useState(0)
+  const [connectionStatus, setConnectionStatus] = useState('جاري فحص الاتصال...')
+  const [connectionDetails, setConnectionDetails] = useState('')
 
   useEffect(() => {
     let mounted = true
+    const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
+    const envPublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
+    const envAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+    const envKey = envPublishableKey || envAnonKey
+
+    setConnectionDetails(
+      'URL: ' + (envUrl ? new URL(envUrl).host : 'غير موجود') +
+      ' | المفتاح: ' + (envKey ? 'موجود' : 'غير موجود')
+    )
+
+    if (!envUrl || !envKey) {
+      setConnectionStatus('❌ متغيرات Supabase غير موجودة في نسخة البناء')
+      return () => { mounted = false }
+    }
+
     supabase.rpc('get_top_users', { p_limit: 100 }).then(({ data, error }) => {
       if (!mounted) return
       if (error) {
@@ -45,9 +62,12 @@ export default function Rewards() {
         if (!mounted) return
         if (error) {
           console.error('[CoinGameDz] Wheel prizes unavailable:', error.message)
+          setConnectionStatus('❌ الاتصال موجود لكن طلب wheel_prizes فشل')
+          setConnectionDetails((current) => current + ' | الخطأ: ' + error.message)
           setError(error.message)
           return
         }
+        setConnectionStatus('🟢 اتصال Supabase ناجح و wheel_prizes تعمل')
         setWheelPrizes(((data ?? []) as WheelPrize[]).map((item) => ({
           ...item,
           points: Number(item.points),
@@ -146,6 +166,10 @@ export default function Rewards() {
           </div>
         </div>
 
+        <div className="mt-4 rounded-xl border border-white/10 bg-slate-900 p-3 text-xs">
+          <p className="font-bold">{connectionStatus}</p>
+          <p className="mt-1 break-words text-slate-400">{connectionDetails}</p>
+        </div>
         {error && <p className="mt-4 rounded-xl bg-red-500/10 p-3 text-sm text-red-400">{error}</p>}
 
         <div className="mt-8">
