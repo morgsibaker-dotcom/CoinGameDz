@@ -72,9 +72,7 @@ export const useUserStore = create<UserStore>((set) => ({
           Number(dbUser.referral_count ?? 0),
 
         referralEarnings:
-          Math.floor(
-            Number(dbUser.referral_count ?? 0) / 10
-          ) * 100,
+          Number(dbUser.referral_earnings ?? 0),
       }
 
       set({ user })
