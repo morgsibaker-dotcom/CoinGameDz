@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import Header from '../components/common/Header'
 import BottomNavigation from '../components/common/BottomNavigation'
 import { useUserStore } from '../store/userStore'
+import i18n, { applyLanguage, supportedLanguages } from '../i18n/config'
 
 export default function Profile() {
   const { t } = useTranslation()
@@ -26,6 +27,21 @@ export default function Profile() {
             <div className="rounded-2xl bg-slate-950 p-4"><p className="text-xs text-slate-500">{t('profile.referrals')}</p><p className="mt-1 text-xl font-black">{user?.referralCount ?? 0}</p></div>
           </div>
           <div className="mt-3 rounded-2xl bg-slate-950 p-4"><p className="text-xs text-slate-500">{t('profile.code')}</p><p className="mt-1 font-bold tracking-wider">{user?.referralCode || 'DZE-XXXXXX'}</p></div>
+          <div className="mt-3 rounded-2xl bg-slate-950 p-4">
+            <p className="text-xs text-slate-500">{t('profile.language')}</p>
+            <select
+              value={i18n.language}
+              onChange={(event) => applyLanguage(event.target.value)}
+              className="mt-2 w-full rounded-xl bg-slate-800 px-3 py-3 text-sm outline-none"
+              aria-label={t('profile.language')}
+            >
+              {supportedLanguages.map((language) => (
+                <option key={language.code} value={language.code}>
+                  {language.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </section>
       <BottomNavigation />
