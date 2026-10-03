@@ -9,6 +9,7 @@ export interface Task {
   category: TaskCategory
   reward_points: number
   max_completions_per_user: number | null
+  completion_count: number
   completed: boolean
 }
 
