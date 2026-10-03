@@ -19,6 +19,7 @@ import AdminWheel from './pages/AdminWheel'
 import { initializeTelegramWebApp } from './services/telegramService'
 import { useTelegramStore } from './store/telegramStore'
 import { useUserStore } from './store/userStore'
+import { applyLanguage } from './i18n/config'
 
 export default function App() {
   const [ready, setReady] = useState(false)
@@ -30,6 +31,10 @@ export default function App() {
     const boot = async () => {
       initializeTelegramWebApp()
       await initializeTelegram()
+      const telegramLanguage = useTelegramStore.getState().telegramLanguageCode
+      if (telegramLanguage === 'ar' || telegramLanguage === 'fr' || telegramLanguage === 'en') {
+        applyLanguage(telegramLanguage)
+      }
       if (mounted) {
         await loadUser()
         setReady(true)
