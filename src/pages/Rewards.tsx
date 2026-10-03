@@ -12,6 +12,8 @@ type SpinResult = { success: boolean; prize_id: string; prize_points: number; pr
 
 const wheelColors = ['#0ea5e9', '#6366f1', '#8b5cf6', '#d946ef', '#10b981', '#06b6d4', '#f59e0b', '#f43f5e', '#14b8a6', '#ec4899']
 
+type VisualPrize = WheelPrize & { displayLabel: string }
+
 const shufflePrizes = (items: WheelPrize[]) => {
   const shuffled = [...items]
   for (let index = shuffled.length - 1; index > 0; index -= 1) {
@@ -112,24 +114,46 @@ export default function Rewards() {
     return () => { mounted = false }
   }, [])
 
+  const visualPrizes = useMemo<VisualPrize[]>(() => {
+    const groups = [
+      { points: 0, probability: 0, label: 'فارغ' },
+      { points: 15, probability: 0, label: '15 نقطة' },
+      { points: 100, probability: 0, label: '100 نقطة' },
+      { points: 500, probability: 0, label: '500 نقطة' },
+      { points: 1000, probability: 0, label: '1000 نقطة' },
+    ]
+    wheelPrizes.forEach((prize) => {
+      const group = groups.find((item) => item.points === prize.points)
+      if (group) group.probability += Number(prize.probability)
+    })
+    return shufflePrizes(groups.filter((item) => item.probability > 0).map((item, index) => ({
+      id: 'visual-' + item.points + '-' + index,
+      label: item.label,
+      displayLabel: item.label,
+      points: item.points,
+      probability: item.probability,
+      is_active: true,
+    })))
+  }, [wheelPrizes])
+
   const wheelTotal = useMemo(
-    () => wheelPrizes.reduce((sum, prize) => sum + prize.probability, 0),
-    [wheelPrizes]
+    () => visualPrizes.reduce((sum, prize) => sum + prize.probability, 0),
+    [visualPrizes]
   )
 
   const wheelStyle = useMemo(() => {
-    if (wheelPrizes.length === 0 || wheelTotal <= 0) {
+    if (visualPrizes.length === 0 || wheelTotal <= 0) {
       return { background: 'conic-gradient(#334155 0deg 360deg)' }
     }
     let start = 0
     const stops: string[] = []
-    wheelPrizes.forEach((prize, index) => {
+    visualPrizes.forEach((prize, index) => {
       const end = start + (prize.probability / wheelTotal) * 360
       stops.push(wheelColors[index % wheelColors.length] + ' ' + start + 'deg ' + end + 'deg')
       start = end
     })
     return { background: 'conic-gradient(' + stops.join(', ') + ')' }
-  }, [wheelPrizes, wheelTotal])
+  }, [visualPrizes, wheelTotal])
 
   const spinWheel = async () => {
     if (!user || spinning) return
@@ -142,22 +166,11 @@ export default function Rewards() {
       if (rpcError) throw new Error(rpcError.message)
 
       const result = data as SpinResult
-      let prizeIndex = wheelPrizes.findIndex((prize) => prize.id === result.prize_id)
-
-      // If the visual wheel is using the fallback layout, place the animation
-      // on a segment matching the actual RPC result.
-      if (prizeIndex < 0) {
-        const matchingIndexes = wheelPrizes
-          .map((prize, index) => prize.points === Number(result.prize_points) ? index : -1)
-          .filter((index) => index >= 0)
-        if (matchingIndexes.length > 0) {
-          prizeIndex = matchingIndexes[Math.floor(Math.random() * matchingIndexes.length)]
-        }
-      }
+      const prizeIndex = visualPrizes.findIndex((prize) => prize.points === Number(result.prize_points))
 
       if (prizeIndex >= 0 && wheelTotal > 0) {
-        const before = wheelPrizes.slice(0, prizeIndex).reduce((sum, item) => sum + item.probability, 0)
-        const prize = wheelPrizes[prizeIndex]
+        const before = visualPrizes.slice(0, prizeIndex).reduce((sum, item) => sum + item.probability, 0)
+        const prize = visualPrizes[prizeIndex]
         const centerAngle = ((before + prize.probability / 2) / wheelTotal) * 360
         setWheelRotation((current) => current + 2160 + (360 - centerAngle))
       }
@@ -207,8 +220,8 @@ export default function Rewards() {
                 >
                   <div className="absolute inset-1 rounded-full border-2 border-white/25" />
 
-                  {wheelPrizes.map((prize, index) => {
-                    const before = wheelPrizes.slice(0, index).reduce((sum, item) => sum + item.probability, 0)
+                  {visualPrizes.map((prize, index) => {
+                    const before = visualPrizes.slice(0, index).reduce((sum, item) => sum + item.probability, 0)
                     const centerAngle = ((before + prize.probability / 2) / wheelTotal) * 360
                     const radians = (centerAngle - 90) * Math.PI / 180
                     const left = 50 + Math.cos(radians) * 35
@@ -223,19 +236,17 @@ export default function Rewards() {
                         <div
                           className={[
                             'flex h-10 w-10 items-center justify-center rounded-xl border-2 shadow-lg backdrop-blur-sm',
-                            'sm:h-11 sm:w-11',
+                            'h-12 w-12 sm:h-14 sm:w-14',
                             prize.points > 0
                               ? 'border-white/80 bg-slate-950/90 text-amber-300'
                               : 'border-white/50 bg-slate-900/75 text-white/80',
                           ].join(' ')}
                         >
-                          <Package className="h-5 w-5 sm:h-5 sm:w-5" strokeWidth={2.2} />
+                          <Package className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2.2} />
                         </div>
-                        {prize.points > 0 && (
-                          <span className="mt-0.5 rounded-full bg-slate-950/90 px-1.5 py-0.5 text-[9px] font-black leading-none text-white shadow-md sm:text-[10px]">
-                            {prize.points.toLocaleString()}
-                          </span>
-                        )}
+                        <span className="mt-1 rounded-full bg-slate-950/90 px-2 py-1 text-[10px] font-black leading-none text-white shadow-md sm:text-[11px]">
+                          {prize.displayLabel} · {prize.probability}%
+                        </span>
                       </div>
                     )
                   })}
@@ -249,6 +260,16 @@ export default function Rewards() {
 
             <h2 className="mt-3 text-xl font-black">{t('rewards.wheelTitle')}</h2>
             <p className="mt-1 text-sm text-slate-400">{t('rewards.wheelSubtitle')}</p>
+
+            <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {visualPrizes.map((prize) => (
+                <div key={prize.id} className="rounded-xl border border-white/10 bg-slate-950/70 px-2 py-2 text-center">
+                  <Package className="mx-auto h-5 w-5 text-amber-300" />
+                  <p className="mt-1 text-[11px] font-bold text-white">{prize.displayLabel}</p>
+                  <p className="text-[10px] font-black text-slate-400">{prize.probability}%</p>
+                </div>
+              ))}
+            </div>
 
             <button
               type="button"
