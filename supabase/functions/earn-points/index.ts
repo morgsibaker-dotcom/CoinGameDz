@@ -27,13 +27,15 @@ Deno.serve(async(req)=>{
     if(action==='ad'){
       amount=adRewardPoints
       if(!providerEventId)throw new Error('Verified ad event is required')
+      const {data:userForAd,error:userAdError}=await admin.from('users').select('id').eq('auth_user_id',session.user.id).maybeSingle()
+      if(userAdError)throw new Error(userAdError.message)
+      if(!userForAd)throw new Error('User profile not found')
       const {data:dup}=await admin.from('ad_events').select('id').eq('provider_event_id',providerEventId).maybeSingle()
       if(dup)throw new Error('Ad reward already claimed')
       const dayStart=new Date();dayStart.setUTCHours(0,0,0,0)
-      const {count:adCount}=await admin.from('ad_events').select('id',{count:'exact',head:true}).eq('user_id',session.user.id).eq('status','verified').gte('created_at',dayStart.toISOString())
+      const {count:adCount,error:adCountError}=await admin.from('ad_events').select('id',{count:'exact',head:true}).eq('user_id',userForAd.id).eq('status','verified').gte('created_at',dayStart.toISOString())
+      if(adCountError)throw new Error(adCountError.message)
       if((adCount??0)>=dailyAdLimit)throw new Error('Daily ad limit reached')
-      const {data:userForAd}=await admin.from('users').select('id').eq('auth_user_id',session.user.id).maybeSingle()
-      if(!userForAd)throw new Error('User profile not found')
       const {error:ae}=await admin.from('ad_events').insert({user_id:userForAd.id,provider:String(body?.provider||'unknown'),reward_points:amount,provider_event_id:providerEventId,status:'verified'})
       if(ae)throw new Error(ae.message)
     }
