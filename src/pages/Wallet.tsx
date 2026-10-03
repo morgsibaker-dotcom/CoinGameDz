@@ -57,7 +57,7 @@ export default function Wallet() {
         <h1 className="mt-2 text-3xl font-black">{t('wallet.title')}</h1>
         <div className="mt-6 rounded-3xl border border-white/10 bg-slate-900 p-5">
           <p className="text-sm text-slate-400">{t('wallet.balance')}</p>
-          <p className="mt-1 text-4xl font-black">{balance.toLocaleString()} <span className="text-lg text-sky-400">DZE</span></p>
+          <p className="mt-1 text-4xl font-black">{balance.toLocaleString()} <span className="text-lg text-sky-400">DZD</span></p>
           <div className="mt-4 grid grid-cols-3 gap-2">
             <div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-500">USD</p><p className="font-bold">{usd.toFixed(2)} USD</p></div>
             <div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-500">DZD</p><p className="font-bold">{dzd.toFixed(2)} DZD</p></div>
