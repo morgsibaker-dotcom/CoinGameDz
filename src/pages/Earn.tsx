@@ -64,8 +64,10 @@ export default function Earn() {
     setBusy('daily')
     setError('')
     try {
-      const result = await awardPoints('daily_checkin')
-      updatePoints(result.points)
+      const { data, error } = await supabase.rpc('claim_daily_login')
+      if (error) throw new Error(error.message)
+      if (!data?.success) throw new Error(data?.error ?? 'Daily bonus failed')
+      updatePoints(Number(data.points_balance ?? 0))
       setClaimed(v => [...v, 'daily'])
     } catch (e) {
       setError(e instanceof Error ? e.message : t('common.error'))
@@ -99,7 +101,9 @@ export default function Earn() {
     setBusy(task.id)
     setError('')
     try {
-      const result = await completeTask(task.id)
+      const currentUser = useUserStore.getState().user
+      if (!currentUser?.id) throw new Error('User profile not found')
+      const result = await completeTask(task.id, String(currentUser.id))
       updatePoints(result.pointsBalance)
       setTasks(items => items.map(item =>
         item.id === task.id
