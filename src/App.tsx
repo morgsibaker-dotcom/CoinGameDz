@@ -8,6 +8,8 @@ import Wallet from './pages/Wallet'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 import Admin from './pages/Admin'
+import AdminLogin from './pages/AdminLogin'
+import AdminGuard from './components/admin/AdminGuard'
 import AdminUsers from './pages/AdminUsers'
 import AdminTasks from './pages/AdminTasks'
 import AdminWithdrawals from './pages/AdminWithdrawals'
@@ -51,10 +53,13 @@ export default function App() {
         <Route path="/referrals" element={<Referrals />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/admin/users" element={<AdminUsers />} />
-        <Route path="/admin/tasks" element={<AdminTasks />} />
-        <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route element={<AdminGuard />}>
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/tasks" element={<AdminTasks />} />
+          <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
+        </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
