@@ -2,443 +2,177 @@ import { FormEvent, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, RefreshCw } from 'lucide-react'
 import {
+  getAdminCoreSettings,
+  updateAdminCoreSettings,
   updateAdminEmail,
   updateAdminPassword,
-  getAdminAppConfig,
-  updateAdminAppConfig,
-  AdminAppConfig,
+  AdminCoreSettings,
 } from '../services/adminSettingsService'
 
-interface AppConfigForm {
-  rewarded_video_points: string
-  daily_login_points: string
-  points_per_usd: string
-  referral_reward_points: string
-  referrals_per_reward: string
-  minimum_withdrawal_points: string
-}
-
-const DEFAULT_CONFIG: AppConfigForm = {
-  rewarded_video_points: '2',
-  daily_login_points: '10',
-  points_per_usd: '1000',
-  referral_reward_points: '100',
-  referrals_per_reward: '10',
-  minimum_withdrawal_points: '1000',
+const defaults: AdminCoreSettings = {
+  withdrawal_min_points: 10000,
+  points_per_usd: 1000,
+  tap_limit_per_minute: 60,
+  daily_ad_limit: 10,
+  ad_reward_points: 100,
 }
 
 export default function AdminSettings() {
   const navigate = useNavigate()
-
+  const [settings, setSettings] = useState<AdminCoreSettings>(defaults)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-
-  const [configForm, setConfigForm] =
-    useState<AppConfigForm>(DEFAULT_CONFIG)
-
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [updatingConfigKey, setUpdatingConfigKey] =
-    useState<string | null>(null)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
-  useEffect(() => {
-    void loadAppConfig()
-  }, [])
-
-  async function loadAppConfig() {
+  async function load() {
     try {
       setLoading(true)
       setError('')
-
-      const configs = await getAdminAppConfig()
-
-      const newForm: AppConfigForm = {
-        ...DEFAULT_CONFIG,
-      }
-
-      configs.forEach((config: AdminAppConfig) => {
-        if (config.key in newForm) {
-          newForm[config.key as keyof AppConfigForm] =
-            String(config.value)
-        }
-      })
-
-      setConfigForm(newForm)
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to load app configuration.',
-      )
+      setSettings(await getAdminCoreSettings())
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load settings')
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleEmailSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
-    event.preventDefault()
+  useEffect(() => {
+    void load()
+  }, [])
 
+  const update = (key: keyof AdminCoreSettings, value: string) => {
+    setSettings(current => ({ ...current, [key]: Number(value) }))
+  }
+
+  async function saveSettings() {
+    setSaving(true)
     setMessage('')
     setError('')
-    setSaving(true)
-
     try {
-      await updateAdminEmail(email)
-
-      setMessage(
-        'Email update requested. Check the new email inbox for confirmation.',
-      )
-
-      setEmail('')
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to update email.',
-      )
+      await updateAdminCoreSettings(settings)
+      setMessage('Core settings saved successfully.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save settings')
     } finally {
       setSaving(false)
     }
   }
 
-  async function handlePasswordSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function saveEmail(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-
+    setSaving(true)
     setMessage('')
     setError('')
+    try {
+      await updateAdminEmail(email)
+      setEmail('')
+      setMessage('Email update requested. Check the new email for confirmation.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to update email')
+    } finally {
+      setSaving(false)
+    }
+  }
 
+  async function savePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setMessage('')
+    setError('')
     if (password.length < 6) {
       setError('Password must be at least 6 characters.')
       return
     }
-
     if (password !== confirmPassword) {
       setError('Passwords do not match.')
       return
     }
-
     setSaving(true)
-
     try {
       await updateAdminPassword(password)
-
-      setMessage('Password updated successfully.')
-
       setPassword('')
       setConfirmPassword('')
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to update password.',
-      )
+      setMessage('Password updated successfully.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to update password')
     } finally {
       setSaving(false)
     }
   }
 
-  function handleConfigChange(
-    key: keyof AppConfigForm,
-    value: string,
-  ) {
-    setConfigForm((prev) => ({
-      ...prev,
-      [key]: value,
-    }))
-  }
-
-  async function saveConfigValue(
-    key: keyof AppConfigForm,
-  ) {
-    try {
-      setUpdatingConfigKey(key)
-      setError('')
-      setMessage('')
-
-      const value = configForm[key]
-      const numValue = Number(value)
-
-      if (
-        !Number.isFinite(numValue) ||
-        numValue < 0
-      ) {
-        throw new Error(
-          `Invalid value for ${key}: must be a non-negative number.`,
-        )
-      }
-
-      await updateAdminAppConfig(key, numValue)
-
-      setMessage(`${key} updated successfully.`)
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : `Failed to update ${key}.`,
-      )
-    } finally {
-      setUpdatingConfigKey(null)
-    }
-  }
-
-  const configLabels: Record<
-    keyof AppConfigForm,
-    string
-  > = {
-    rewarded_video_points: 'Rewarded Video Points',
-    daily_login_points: 'Daily Login Points',
-    points_per_usd: 'Points per USD',
-    referral_reward_points:
-      'Referral Reward Points',
-    referrals_per_reward:
-      'Referrals per Reward',
-    minimum_withdrawal_points:
-      'Minimum Withdrawal Points',
-  }
-
-  const configDescriptions: Record<
-    keyof AppConfigForm,
-    string
-  > = {
-    rewarded_video_points:
-      'Points awarded for watching one rewarded video.',
-    daily_login_points:
-      'Points awarded for the daily login bonus.',
-    points_per_usd:
-      'Number of points equal to 1 USD.',
-    referral_reward_points:
-      'Points awarded after reaching the referral reward threshold.',
-    referrals_per_reward:
-      'Number of successful referrals required for one reward.',
-    minimum_withdrawal_points:
-      'Minimum points required to request a withdrawal.',
-  }
+  const fields: Array<{ key: keyof AdminCoreSettings; label: string; min: number }> = [
+    { key: 'withdrawal_min_points', label: 'Minimum withdrawal points', min: 1 },
+    { key: 'points_per_usd', label: 'Points per 1 USD', min: 1 },
+    { key: 'tap_limit_per_minute', label: 'Tap limit per minute', min: 1 },
+    { key: 'daily_ad_limit', label: 'Daily rewarded-ad limit', min: 0 },
+    { key: 'ad_reward_points', label: 'Points per rewarded ad', min: 0 },
+  ]
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <header className="border-b border-slate-800 bg-slate-900 px-4 py-4">
-        <div className="mx-auto flex max-w-7xl items-center gap-4">
-          <button
-            type="button"
-            onClick={() => navigate('/admin')}
-            className="rounded-xl bg-slate-800 p-3 hover:bg-slate-700"
-          >
+        <div className="mx-auto flex max-w-4xl items-center gap-4">
+          <button type="button" onClick={() => navigate('/admin')} className="rounded-xl bg-slate-800 p-3">
             <ArrowLeft size={20} />
           </button>
-
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">
-              Admin Settings
-            </h1>
-
-            <p className="text-sm text-slate-400">
-              Manage administrator account and app configuration
-            </p>
+            <h1 className="text-2xl font-bold">Admin Settings</h1>
+            <p className="text-sm text-slate-400">Core economy and administrator settings</p>
           </div>
-
-          <button
-            type="button"
-            onClick={() => void loadAppConfig()}
-            disabled={loading}
-            className="rounded-xl bg-slate-800 p-3 hover:bg-slate-700 disabled:opacity-50"
-            title="Refresh config"
-          >
-            <RefreshCw
-              size={19}
-              className={
-                loading ? 'animate-spin' : ''
-              }
-            />
+          <button type="button" onClick={() => void load()} disabled={loading} className="rounded-xl bg-slate-800 p-3">
+            <RefreshCw size={19} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8">
-        {message && (
-          <div className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-400">
-            {message}
-          </div>
-        )}
+      <main className="mx-auto max-w-4xl space-y-6 px-4 py-8">
+        {message && <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-400">{message}</div>}
+        {error && <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-400">{error}</div>}
 
-        {error && (
-          <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-400">
-            {error}
-          </div>
-        )}
-
-        <section className="mb-8 space-y-6">
-          <div>
-            <h2 className="text-2xl font-bold">
-              App Configuration
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-400">
-              Manage core game economy settings
-            </p>
-          </div>
-
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+          <h2 className="text-xl font-bold">Core Economy</h2>
+          <p className="mt-1 text-sm text-slate-400">These values control earning limits and withdrawals.</p>
           {loading ? (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center text-slate-400">
-              Loading configuration...
-            </div>
+            <p className="mt-6 text-slate-400">Loading...</p>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2">
-              {(
-                Object.keys(
-                  configLabels,
-                ) as (keyof AppConfigForm)[]
-              ).map((key) => (
-                <div
-                  key={key}
-                  className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
-                >
-                  <label className="mb-2 block text-sm font-semibold">
-                    {configLabels[key]}
-                  </label>
-
-                  <p className="mb-3 text-xs text-slate-500">
-                    {configDescriptions[key]}
-                  </p>
-
-                  <div className="flex gap-2">
+            <>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {fields.map(field => (
+                  <label key={field.key} className="block">
+                    <span className="mb-2 block text-sm text-slate-300">{field.label}</span>
                     <input
                       type="number"
-                      min="0"
-                      step="1"
-                      value={configForm[key]}
-                      onChange={(event) =>
-                        handleConfigChange(
-                          key,
-                          event.target.value,
-                        )
-                      }
-                      className="flex-1 rounded-xl bg-slate-800 px-4 py-3 outline-none"
+                      min={field.min}
+                      value={settings[field.key]}
+                      onChange={e => update(field.key, e.target.value)}
+                      className="w-full rounded-xl border border-slate-700 bg-slate-800 p-3"
                     />
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void saveConfigValue(key)
-                      }
-                      disabled={
-                        updatingConfigKey !== null
-                      }
-                      className="rounded-xl bg-blue-600 px-4 py-3 font-semibold disabled:opacity-50"
-                    >
-                      {updatingConfigKey === key
-                        ? 'Saving...'
-                        : 'Save'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  </label>
+                ))}
+              </div>
+              <button type="button" onClick={() => void saveSettings()} disabled={saving} className="mt-5 w-full rounded-xl bg-sky-500 p-3 font-bold text-slate-950 disabled:opacity-50">
+                {saving ? 'Saving...' : 'Save Core Settings'}
+              </button>
+            </>
           )}
         </section>
 
-        <section className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-bold">
-              Account Settings
-            </h2>
+        <section className="grid gap-6 md:grid-cols-2">
+          <form onSubmit={saveEmail} className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+            <h2 className="text-xl font-bold">Change Email</h2>
+            <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="New email" className="mt-5 w-full rounded-xl bg-slate-800 p-3" />
+            <button type="submit" disabled={saving} className="mt-4 w-full rounded-xl bg-sky-500 p-3 font-bold text-slate-950 disabled:opacity-50">Update Email</button>
+          </form>
 
-            <p className="mt-1 text-sm text-slate-400">
-              Manage your administrator account
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-              <h3 className="text-xl font-semibold">
-                Change Email
-              </h3>
-
-              <form
-                onSubmit={handleEmailSubmit}
-                className="mt-5 space-y-4"
-              >
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(event) =>
-                    setEmail(event.target.value)
-                  }
-                  placeholder="New email address"
-                  required
-                  className="w-full rounded-xl bg-slate-800 px-4 py-3 outline-none"
-                />
-
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold disabled:opacity-50"
-                >
-                  {saving
-                    ? 'Updating...'
-                    : 'Change Email'}
-                </button>
-              </form>
-
-              <p className="mt-3 text-sm text-slate-500">
-                Supabase may require confirmation from
-                the new email address.
-              </p>
-            </section>
-
-            <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-              <h3 className="text-xl font-semibold">
-                Change Password
-              </h3>
-
-              <form
-                onSubmit={handlePasswordSubmit}
-                className="mt-5 space-y-4"
-              >
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(event) =>
-                    setPassword(event.target.value)
-                  }
-                  placeholder="New password"
-                  required
-                  minLength={6}
-                  className="w-full rounded-xl bg-slate-800 px-4 py-3 outline-none"
-                />
-
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(event) =>
-                    setConfirmPassword(
-                      event.target.value,
-                    )
-                  }
-                  placeholder="Confirm new password"
-                  required
-                  minLength={6}
-                  className="w-full rounded-xl bg-slate-800 px-4 py-3 outline-none"
-                />
-
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold disabled:opacity-50"
-                >
-                  {saving
-                    ? 'Updating...'
-                    : 'Change Password'}
-                </button>
-              </form>
-            </section>
-          </div>
+          <form onSubmit={savePassword} className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+            <h2 className="text-xl font-bold">Change Password</h2>
+            <input type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} placeholder="New password" className="mt-5 w-full rounded-xl bg-slate-800 p-3" />
+            <input type="password" required minLength={6} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Confirm password" className="mt-3 w-full rounded-xl bg-slate-800 p-3" />
+            <button type="submit" disabled={saving} className="mt-4 w-full rounded-xl bg-sky-500 p-3 font-bold text-slate-950 disabled:opacity-50">Update Password</button>
+          </form>
         </section>
       </main>
     </div>
