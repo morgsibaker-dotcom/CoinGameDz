@@ -68,3 +68,5 @@ $$;
 
 revoke all on function public.award_points_atomic(uuid,bigint,text,text,numeric,jsonb)
   from public, anon, authenticated;
+
+grant execute on function public.award_points_atomic(uuid,bigint,text,text,numeric,jsonb) to service_role;
