@@ -27,16 +27,33 @@ export default function Rewards() {
     let mounted = true
     supabase.rpc('get_top_users', { p_limit: 100 }).then(({ data, error }) => {
       if (!mounted) return
-      if (error) { setError(error.message); return }
+      if (error) {
+        console.warn('[CoinGameDz] Leaderboard unavailable:', error.message)
+        return
+      }
       setLeaders((data ?? []) as Leader[])
     })
-    supabase.rpc('get_wheel_prizes').then(({ data, error }) => {
-      if (!mounted) return
-      if (error) { setError(error.message); return }
-      setWheelPrizes(((data ?? []) as WheelPrize[]).map((item) => ({
-        ...item, points: Number(item.points), probability: Number(item.probability),
-      })))
-    })
+
+    // Read the wheel table directly. This avoids relying on the
+    // get_wheel_prizes RPC being exposed through Supabase Data API.
+    supabase
+      .from('wheel_prizes')
+      .select('id,label,points,probability,is_active')
+      .eq('is_active', true)
+      .order('id', { ascending: true })
+      .then(({ data, error }) => {
+        if (!mounted) return
+        if (error) {
+          console.error('[CoinGameDz] Wheel prizes unavailable:', error.message)
+          setError(error.message)
+          return
+        }
+        setWheelPrizes(((data ?? []) as WheelPrize[]).map((item) => ({
+          ...item,
+          points: Number(item.points),
+          probability: Number(item.probability),
+        })))
+      })
     return () => { mounted = false }
   }, [])
 
