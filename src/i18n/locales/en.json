@@ -6,6 +6,6 @@
   "rewards":{"eyebrow":"Rewards","title":"Daily Reward","subtitle":"Claim once per day.","checkin":"Daily check-in","claim":"Claim","saving":"Saving...","top":"Top 100","level":"Lv."},
   "referrals":{"eyebrow":"Referrals","title":"Invite friends","code":"Your referral code","copy":"Copy invite link","copied":"Copied ✓","invited":"Invited","earned":"DZE earned","note":"The referral reward is configured by the administrator and is awarded once when a new referral is successfully processed."},
   "wallet":{"eyebrow":"Wallet","title":"Your wallet","balance":"Available balance","minimum":"Minimum withdrawal: {{amount}} DZE.","baridi":"BaridiMob account / phone","ton":"TON wallet address","submitted":"Request submitted","submitting":"Submitting...","request":"Request withdrawal","pending":"Pending admin approval.","withdrawalsNote":"Withdrawals require admin approval."},
-  "profile":{"eyebrow":"Profile","title":"Profile","telegramUser":"Telegram user","level":"Level {{level}}","balance":"Balance","referrals":"Referrals","code":"Referral code"},
+  "profile":{"eyebrow":"Profile","title":"Profile","telegramUser":"Telegram user","level":"Level {{level}}","balance":"Balance","referrals":"Referrals","code":"Referral code","language":"Language"},
   "common":{"loading":"Loading...","error":"An error occurred","back":"Back","close":"Close","save":"Save","cancel":"Cancel","delete":"Delete","edit":"Edit","add":"Add","search":"Search"}
 }
