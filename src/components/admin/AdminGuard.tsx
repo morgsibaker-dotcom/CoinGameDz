@@ -1,14 +1,8 @@
-import { ReactNode, useEffect, useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Navigate, Outlet } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
-interface AdminGuardProps {
-  children: ReactNode
-}
-
-export default function AdminGuard({
-  children,
-}: AdminGuardProps) {
+export default function AdminGuard() {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
 
@@ -33,7 +27,7 @@ export default function AdminGuard({
 
         if (error) {
           console.error(
-            '[CoinGameDz] Admin check failed',
+            '[DzCoinEren] Admin check failed',
             error,
           )
           setIsAdmin(false)
@@ -43,7 +37,7 @@ export default function AdminGuard({
         setIsAdmin(!!admin)
       } catch (error) {
         console.error(
-          '[CoinGameDz] Admin authentication check failed',
+          '[DzCoinEren] Admin authentication check failed',
           error,
         )
         setIsAdmin(false)
@@ -52,7 +46,7 @@ export default function AdminGuard({
       }
     }
 
-    checkAdmin()
+    void checkAdmin()
   }, [])
 
   if (loading) {
@@ -67,5 +61,5 @@ export default function AdminGuard({
     return <Navigate to="/admin/login" replace />
   }
 
-  return <>{children}</>
+  return <Outlet />
 }
