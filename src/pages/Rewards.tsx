@@ -14,7 +14,7 @@ const wheelColors = ['#0ea5e9', '#6366f1', '#8b5cf6', '#d946ef', '#10b981', '#06
 
 type VisualPrize = WheelPrize & { displayLabel: string }
 
-const shufflePrizes = (items: WheelPrize[]) => {
+const shufflePrizes = <T extends WheelPrize>(items: T[]): T[] => {
   const shuffled = [...items]
   for (let index = shuffled.length - 1; index > 0; index -= 1) {
     const randomIndex = Math.floor(Math.random() * (index + 1))
