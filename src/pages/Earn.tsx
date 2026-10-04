@@ -64,7 +64,11 @@ export default function Earn() {
     setBusy('daily')
     setError('')
     try {
-      const { data, error } = await supabase.rpc('claim_daily_login')
+      const currentUser = useUserStore.getState().user
+      if (!currentUser?.id) throw new Error('User profile not found')
+      const { data, error } = await supabase.rpc('claim_daily_login', {
+        p_user_id: String(currentUser.id),
+      })
       if (error) throw new Error(error.message)
       if (!data?.success) throw new Error(data?.error ?? 'Daily bonus failed')
       updatePoints(Number(data.points_balance ?? 0))
