@@ -60,45 +60,12 @@ export default function Earn() {
     }
   }, [])
 
-  const getCurrentAppUserId = async () => {
-    let { data: sessionData } = await supabase.auth.getSession()
-
-    if (!sessionData.session) {
-      const { error: signInError } = await supabase.auth.signInAnonymously()
-      if (signInError) throw new Error(signInError.message)
-      const refreshed = await supabase.auth.getSession()
-      sessionData = refreshed.data
-    }
-
-    const webApp = getTelegramWebApp()
-    const initData = webApp?.initData
-
-    if (initData && sessionData.session) {
-      const { data, error } = await supabase.functions.invoke('telegram-auth', {
-        body: {
-          initData,
-          startParam: webApp?.initDataUnsafe?.start_param ?? null,
-        },
-      })
-      if (error) throw new Error(error.message)
-      if (!data?.success) throw new Error(data?.error ?? 'Telegram authentication failed')
-    }
-
-    const { data, error } = await supabase.rpc('get_current_app_user_id')
-    if (error) throw new Error(error.message)
-    if (!data) throw new Error('User profile not found')
-    return String(data)
-  }
-
   const claimDaily = async () => {
     if (busy) return
     setBusy('daily')
     setError('')
     try {
-      const userId = await getCurrentAppUserId()
-      const { data, error } = await supabase.rpc('claim_daily_login', {
-        p_user_id: userId,
-      })
+      const { data, error } = await supabase.rpc('claim_daily_login')
       if (error) throw new Error(error.message)
       if (!data?.success) throw new Error(data?.error ?? 'Daily bonus failed')
       updatePoints(Number(data.points_balance ?? 0))
@@ -135,8 +102,7 @@ export default function Earn() {
     setBusy(task.id)
     setError('')
     try {
-      const userId = await getCurrentAppUserId()
-      const result = await completeTask(task.id, userId)
+      const result = await completeTask(task.id)
       updatePoints(result.pointsBalance)
       setTasks(items => items.map(item =>
         item.id === task.id
