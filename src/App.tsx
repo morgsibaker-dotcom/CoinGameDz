@@ -21,6 +21,8 @@ import { initializeTelegramWebApp } from './services/telegramService'
 import { useTelegramStore } from './store/telegramStore'
 import { useUserStore } from './store/userStore'
 import { applyLanguage } from './i18n/config'
+import { supabase } from './lib/supabase'
+import { getTelegramWebApp } from './services/telegramService'
 
 export default function App() {
   const [ready, setReady] = useState(false)
@@ -32,6 +34,28 @@ export default function App() {
     const boot = async () => {
       initializeTelegramWebApp()
       await initializeTelegram()
+
+      // Establish the browser Supabase identity before loading the app user.
+      // telegram-auth then binds that identity to the Telegram profile.
+      let { data: sessionData } = await supabase.auth.getSession()
+      if (!sessionData.session) {
+        const { error: signInError } = await supabase.auth.signInAnonymously()
+        if (!signInError) {
+          const refreshed = await supabase.auth.getSession()
+          sessionData = refreshed.data
+        }
+      }
+
+      const webApp = getTelegramWebApp()
+      if (webApp?.initData && sessionData.session) {
+        await supabase.functions.invoke('telegram-auth', {
+          body: {
+            initData: webApp.initData,
+            startParam: webApp.initDataUnsafe?.start_param ?? null,
+          },
+        })
+      }
+
       const telegramLanguage = useTelegramStore.getState().telegramLanguageCode
       if (telegramLanguage && ['ar', 'fr', 'en'].includes(telegramLanguage)) {
         applyLanguage(telegramLanguage)
