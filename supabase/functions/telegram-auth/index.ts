@@ -150,6 +150,17 @@ Deno.serve(async (request) => {
       { auth: { autoRefreshToken: false, persistSession: false } },
     )
 
+    // The Mini App uses an anonymous Supabase session in the browser.
+    // Bind that authenticated Supabase user to the Telegram profile so all
+    // protected earning/withdrawal RPCs can resolve the same app user.
+    const authorization = request.headers.get('Authorization') ?? ''
+    const accessToken = authorization.replace(/^Bearer\s+/i, '').trim()
+    let authUserId: string | null = null
+    if (accessToken) {
+      const { data: authData } = await supabaseAdmin.auth.getUser(accessToken)
+      authUserId = authData.user?.id ?? null
+    }
+
     const { data: existingUser, error: existingUserError } = await supabaseAdmin
       .from('users')
       .select('*')
@@ -169,6 +180,7 @@ Deno.serve(async (request) => {
           last_name: telegramUser.last_name ?? null,
           avatar_url: telegramUser.photo_url ?? null,
           language: telegramUser.language_code ?? appUser.language ?? 'en',
+          ...(authUserId ? { auth_user_id: authUserId } : {}),
           updated_at: new Date().toISOString(),
         })
         .eq('id', appUser.id)
@@ -191,6 +203,7 @@ Deno.serve(async (request) => {
           usd_equivalent: 0,
           level: 1,
           referral_code: makeReferralCode(telegramUser.id),
+          ...(authUserId ? { auth_user_id: authUserId } : {}),
           is_active: true,
         })
         .select('*')
