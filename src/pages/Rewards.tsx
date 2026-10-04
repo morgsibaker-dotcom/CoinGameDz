@@ -47,11 +47,7 @@ export default function Rewards() {
       if (!error) setLeaders((data ?? []) as Leader[])
     })
 
-    supabase
-      .from('wheel_prizes')
-      .select('id,label,points,probability,is_active')
-      .eq('is_active', true)
-      .order('id', { ascending: true })
+    supabase.rpc('get_public_wheel_prizes')
       .then(({ data, error }) => {
         if (!mounted) return
         if (error) {
