@@ -19,7 +19,7 @@ export async function getActiveTasks(): Promise<Task[]> {
   return (data ?? []) as Task[]
 }
 
-export async function completeTask(taskId: string, userId: string) {
+export async function completeTask(taskId: string) {
   const { data, error } = await supabase.rpc('complete_task', {
     p_task_id: taskId,
   })
