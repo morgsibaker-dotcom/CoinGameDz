@@ -7,7 +7,6 @@ import { awardPoints } from '../services/earnService'
 import { completeTask, getActiveTasks, Task } from '../services/taskService'
 import { supabase } from '../lib/supabase'
 import { useUserStore } from '../store/userStore'
-import { getTelegramWebApp } from '../services/telegramService'
 
 declare global {
   interface Window {
@@ -152,7 +151,7 @@ export default function Earn() {
               <div className="space-y-3">
                 {tasks.map(task => (
                   <div key={task.id} className="rounded-2xl border border-white/10 bg-slate-900 p-4">
-                    <div className="flex items-start justify-between gap-3"><div><b>{task.title}</b><p className="mt-1 text-sm text-slate-400">{task.description}</p></div><span className="whitespace-nowrap font-bold text-sky-400">+{task.reward_points} DZD</span></div>
+                    <div className="flex items-start justify-between gap-3"><div><b>{task.title}</b><p className="mt-1 text-sm text-slate-400">{task.description}</p></div><span className="whitespace-nowrap font-bold text-sky-400">+{task.reward_points} {t('earn.points')}</span></div>
                     <div className="mt-3 flex items-center justify-between gap-3 text-xs text-slate-500"><span>{task.max_completions_per_user === null ? 'Unlimited completions' : `${task.completion_count}/${task.max_completions_per_user}`}</span></div>
                     <button type="button" disabled={task.completed || busy !== null} onClick={() => claimTask(task)}
                       className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 p-3 font-bold text-slate-950 disabled:opacity-50">
