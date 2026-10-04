@@ -135,13 +135,13 @@ export default function Earn() {
           <button type="button" disabled={busy !== null || claimed.includes('daily')} onClick={claimDaily}
             className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-slate-900 p-4 text-left disabled:opacity-60">
             <span className="flex items-center gap-3"><Gift className="h-5 w-5 text-sky-400" /><span><b>{t('earn.daily')}</b><small className="mt-1 block text-slate-500">{t('earn.dailyReward')}</small></span></span>
-            {claimed.includes('daily') ? <Check className="h-5 w-5 text-emerald-400" /> : <span className="font-bold text-sky-400">{busy === 'daily' ? '…' : '+50 DZD'}</span>}
+            {claimed.includes('daily') ? <Check className="h-5 w-5 text-emerald-400" /> : <span className="font-bold text-sky-400">{busy === 'daily' ? '…' : '+50 ' + t('earn.points')}</span>}
           </button>
 
           <button type="button" disabled={busy !== null || !blockId || !adReady} onClick={watchAd}
             className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-slate-900 p-4 text-left disabled:opacity-60">
             <span className="flex items-center gap-3"><Play className="h-5 w-5 text-sky-400" /><span><b>{t('earn.ad')}</b><small className="mt-1 block text-slate-500">{!blockId ? t('earn.notConfigured') : !adReady ? t('earn.adUnavailable') : t('earn.rewardedAd')}</small></span></span>
-            <span className="font-bold text-sky-400">{busy === 'ad' ? '…' : '+' + adReward + ' DZD'}</span>
+            <span className="font-bold text-sky-400">{busy === 'ad' ? '…' : '+' + adReward + ' ' + t('earn.points')}</span>
           </button>
 
           <div className="pt-3">
