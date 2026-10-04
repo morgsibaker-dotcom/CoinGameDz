@@ -1,12 +1,7 @@
 import { supabase } from '../lib/supabase'
 
-export async function getUserByTelegramId(telegramId: number) {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('telegram_id', telegramId)
-    .maybeSingle()
-
+export async function getCurrentUser() {
+  const { data, error } = await supabase.rpc('get_my_profile')
   if (error) throw new Error(error.message)
   return data
 }
