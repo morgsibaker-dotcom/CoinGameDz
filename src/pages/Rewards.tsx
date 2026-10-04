@@ -178,7 +178,7 @@ export default function Rewards() {
               label: result.prize_label,
               points: Number(result.prize_points).toLocaleString(),
             })
-          : '📦 صندوق فارغ'
+          : t('rewards.wheelEmpty')
       )
 
       await new Promise((resolve) => window.setTimeout(resolve, 1200))
@@ -305,7 +305,7 @@ export default function Rewards() {
                   </small>
                 </span>
                 <strong className="text-sky-400">
-                  {Number(leader.points_balance).toLocaleString()} DZD
+                  {Number(leader.points_balance).toLocaleString()} {t('rewards.points')}
                 </strong>
               </div>
             ))}
