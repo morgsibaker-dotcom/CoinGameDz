@@ -7,6 +7,7 @@ import { awardPoints } from '../services/earnService'
 import { completeTask, getActiveTasks, Task } from '../services/taskService'
 import { supabase } from '../lib/supabase'
 import { useUserStore } from '../store/userStore'
+import { getTelegramWebApp } from '../services/telegramService'
 
 declare global {
   interface Window {
@@ -60,6 +61,29 @@ export default function Earn() {
   }, [])
 
   const getCurrentAppUserId = async () => {
+    let { data: sessionData } = await supabase.auth.getSession()
+
+    if (!sessionData.session) {
+      const { error: signInError } = await supabase.auth.signInAnonymously()
+      if (signInError) throw new Error(signInError.message)
+      const refreshed = await supabase.auth.getSession()
+      sessionData = refreshed.data
+    }
+
+    const webApp = getTelegramWebApp()
+    const initData = webApp?.initData
+
+    if (initData && sessionData.session) {
+      const { data, error } = await supabase.functions.invoke('telegram-auth', {
+        body: {
+          initData,
+          startParam: webApp?.initDataUnsafe?.start_param ?? null,
+        },
+      })
+      if (error) throw new Error(error.message)
+      if (!data?.success) throw new Error(data?.error ?? 'Telegram authentication failed')
+    }
+
     const { data, error } = await supabase.rpc('get_current_app_user_id')
     if (error) throw new Error(error.message)
     if (!data) throw new Error('User profile not found')
