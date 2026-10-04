@@ -11,12 +11,14 @@ export interface PointTransaction {
   created_at: string
 }
 
-export async function getPointTransactions(userId: string): Promise<PointTransaction[]> {
+export async function getPointTransactions(_userId: string): Promise<PointTransaction[]> {
   const { data, error } = await supabase.rpc('get_my_transactions', { p_limit: 100 })
 
   if (error) throw new Error(error.message)
 
-  return (data ?? []).map(row => ({
+  const rows = (data ?? []) as Array<Partial<PointTransaction>>
+
+  return rows.map(row => ({
     ...row,
     amount: Number(row.amount ?? 0),
   })) as PointTransaction[]
