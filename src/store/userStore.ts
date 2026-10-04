@@ -17,21 +17,10 @@ export const useUserStore = create<UserStore>((set) => ({
     set({ isLoading: true })
 
     try {
-      const { useTelegramStore } =
-        await import('./telegramStore')
-
       const { getCurrentUser, getReferralStats } =
         await import('../services/userService')
 
-      const telegramUser =
-        useTelegramStore.getState().telegramUser
-
-      if (!telegramUser) {
-        return
-      }
-
-      const dbUser =
-        await getUserByTelegramId(telegramUser.id)
+      const dbUser = await getCurrentUser()
 
       if (!dbUser) {
         return
