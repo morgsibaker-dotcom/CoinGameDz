@@ -20,7 +20,7 @@ export const useUserStore = create<UserStore>((set) => ({
       const { useTelegramStore } =
         await import('./telegramStore')
 
-      const { getUserByTelegramId, getReferralStats } =
+      const { getCurrentUser, getReferralStats } =
         await import('../services/userService')
 
       const telegramUser =
