@@ -23,7 +23,7 @@ import { useUserStore } from './store/userStore'
 import { applyLanguage } from './i18n/config'
 import { supabase } from './lib/supabase'
 
-const TELEGRAM_AUTH_FUNCTION = 'telegram-auth'
+const TELEGRAM_AUTH_FUNCTION = 'rapid-endpoint'
 
 export default function App() {
   const [ready, setReady] = useState(false)
