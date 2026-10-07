@@ -17,12 +17,13 @@ import AdminWithdrawals from './pages/AdminWithdrawals'
 import AdminRewards from './pages/AdminRewards'
 import AdminSettings from './pages/AdminSettings'
 import AdminWheel from './pages/AdminWheel'
-import { initializeTelegramWebApp } from './services/telegramService'
+import { initializeTelegramWebApp, getTelegramWebApp } from './services/telegramService'
 import { useTelegramStore } from './store/telegramStore'
 import { useUserStore } from './store/userStore'
 import { applyLanguage } from './i18n/config'
 import { supabase } from './lib/supabase'
-import { getTelegramWebApp } from './services/telegramService'
+
+const TELEGRAM_AUTH_FUNCTION = 'telegram-auth'
 
 export default function App() {
   const [ready, setReady] = useState(false)
@@ -31,26 +32,33 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true
+
     const boot = async () => {
       initializeTelegramWebApp()
       await initializeTelegram()
 
-      // Establish the browser Supabase identity before loading the app user.
-      // telegram-auth then binds that identity to the Telegram profile.
       let { data: sessionData } = await supabase.auth.getSession()
+
       if (!sessionData.session) {
         const { error: signInError } = await supabase.auth.signInAnonymously()
-        if (!signInError) {
+
+        if (signInError) {
+          console.error('[CoinGameDz] Anonymous auth failed:', signInError)
+        } else {
           const refreshed = await supabase.auth.getSession()
           sessionData = refreshed.data
         }
       }
 
       const webApp = getTelegramWebApp()
-      if (webApp?.initData && sessionData.session) {
-        // Bind the current Supabase anonymous session to the verified Telegram user.
+
+      if (!webApp?.initData) {
+        console.error('[CoinGameDz] Telegram initData is missing. Open the Mini App from Telegram.')
+      } else if (!sessionData.session) {
+        console.error('[CoinGameDz] Supabase session is missing.')
+      } else {
         const { data: authData, error: authError } =
-          await supabase.functions.invoke('rapid-endpoint', {
+          await supabase.functions.invoke(TELEGRAM_AUTH_FUNCTION, {
             body: {
               initData: webApp.initData,
               startParam: webApp.initDataUnsafe?.start_param ?? null,
@@ -68,23 +76,33 @@ export default function App() {
       }
 
       const telegramLanguage = useTelegramStore.getState().telegramLanguageCode
+
       if (telegramLanguage && ['ar', 'fr', 'en'].includes(telegramLanguage)) {
         applyLanguage(telegramLanguage)
       }
+
       if (mounted) {
-        // Give the auth binding a moment to become visible through get_my_profile.
-        for (let attempt = 0; attempt < 3; attempt += 1) {
+        for (let attempt = 0; attempt < 5; attempt += 1) {
           await loadUser()
-          if (useUserStore.getState().user) break
-          if (attempt < 2) {
-            await new Promise((resolve) => setTimeout(resolve, 500))
+
+          if (useUserStore.getState().user) {
+            break
+          }
+
+          if (attempt < 4) {
+            await new Promise((resolve) => setTimeout(resolve, 700))
           }
         }
+
         setReady(true)
       }
     }
+
     void boot()
-    return () => { mounted = false }
+
+    return () => {
+      mounted = false
+    }
   }, [initializeTelegram, loadUser])
 
   if (!ready) {
