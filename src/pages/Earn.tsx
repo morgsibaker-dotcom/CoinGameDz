@@ -21,6 +21,7 @@ declare global {
 export default function Earn() {
   const { t } = useTranslation()
   const updatePoints = useUserStore(s => s.updatePoints)
+  const user = useUserStore(s => s.user)
   const [claimed, setClaimed] = useState<string[]>([])
   const [busy, setBusy] = useState<string | null>(null)
   const [blockId, setBlockId] = useState('')
@@ -64,10 +65,11 @@ export default function Earn() {
     setBusy('daily')
     setError('')
     try {
-      const { data, error } = await supabase.rpc('claim_daily_login')
+      const { data, error } = await supabase.rpc('claim_daily_login', { p_user_id: user?.id })
       if (error) throw new Error(error.message)
+      if (!user?.id) throw new Error('User not ready. Please reopen the Mini App.')
       if (!data?.success) throw new Error(data?.error ?? 'Daily bonus failed')
-      updatePoints(Number(data.points_balance ?? 0))
+      updatePoints(Number(data.new_balance ?? 0))
       setClaimed(v => [...v, 'daily'])
     } catch (e) {
       setError(e instanceof Error ? e.message : t('common.error'))
