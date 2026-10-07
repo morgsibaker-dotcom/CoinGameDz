@@ -48,12 +48,23 @@ export default function App() {
 
       const webApp = getTelegramWebApp()
       if (webApp?.initData && sessionData.session) {
-        await supabase.functions.invoke('rapid-endpoint', {
-          body: {
-            initData: webApp.initData,
-            startParam: webApp.initDataUnsafe?.start_param ?? null,
-          },
-        })
+        // Bind the current Supabase anonymous session to the verified Telegram user.
+        const { data: authData, error: authError } =
+          await supabase.functions.invoke('rapid-endpoint', {
+            body: {
+              initData: webApp.initData,
+              startParam: webApp.initDataUnsafe?.start_param ?? null,
+            },
+            headers: {
+              Authorization: `Bearer ${sessionData.session.access_token}`,
+            },
+          })
+
+        if (authError) {
+          console.error('[CoinGameDz] Telegram auth failed:', authError)
+        } else {
+          console.log('[CoinGameDz] Telegram auth completed:', authData)
+        }
       }
 
       const telegramLanguage = useTelegramStore.getState().telegramLanguageCode
@@ -61,7 +72,14 @@ export default function App() {
         applyLanguage(telegramLanguage)
       }
       if (mounted) {
-        await loadUser()
+        // Give the auth binding a moment to become visible through get_my_profile.
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          await loadUser()
+          if (useUserStore.getState().user) break
+          if (attempt < 2) {
+            await new Promise((resolve) => setTimeout(resolve, 500))
+          }
+        }
         setReady(true)
       }
     }
