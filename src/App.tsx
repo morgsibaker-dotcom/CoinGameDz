@@ -48,7 +48,7 @@ export default function App() {
 
       const webApp = getTelegramWebApp()
       if (webApp?.initData && sessionData.session) {
-        await supabase.functions.invoke('telegram-auth', {
+        await supabase.functions.invoke('rapid-endpoint', {
           body: {
             initData: webApp.initData,
             startParam: webApp.initDataUnsafe?.start_param ?? null,
