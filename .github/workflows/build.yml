@@ -1,5 +1,6 @@
 name: Build CoinGameDz
 # CI validation follows the latest main commit.
+# Build verification trigger.
 
 on:
   push:
