@@ -63,9 +63,11 @@ async function validateTelegramInitData(initData: string): Promise<TelegramInitD
     .map(([key, value]) => `${key}=${value}`)
     .join('\n')
 
-  const secretKey = await crypto.subtle.digest(
-    'SHA-256',
-    new TextEncoder().encode(TELEGRAM_BOT_TOKEN),
+  // Telegram Mini Apps use HMAC-SHA256("WebAppData", bot_token)
+  // as the secret key for validating initData.
+  const secretKey = await hmacSha256(
+    new TextEncoder().encode('WebAppData'),
+    TELEGRAM_BOT_TOKEN,
   )
   const calculatedHashBuffer = await hmacSha256(secretKey, dataCheckString)
   const calculatedHash = bytesToHex(new Uint8Array(calculatedHashBuffer))
